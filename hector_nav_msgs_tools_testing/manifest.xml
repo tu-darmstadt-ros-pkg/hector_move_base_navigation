@@ -1,0 +1,18 @@
+<package>
+  <description brief="hector_nav_msgs_tools_testing">
+
+     hector_nav_msgs_tools_testing
+
+  </description>
+  <author>stefan</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/hector_nav_msgs_tools_testing</url>
+  <depend package="hector_nav_msgs_tools"/>
+  <depend package="geometry_msgs"/>
+
+  <rosdep name="eigen"/>
+
+</package>
+
+

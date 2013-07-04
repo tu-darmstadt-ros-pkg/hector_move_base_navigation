@@ -1,0 +1,105 @@
+# Hector's local planner divides as it commences driving the global plan 
+# into shorter global plans. Those global plans are created with the 
+# global planner defined in "hector_local_global_planner". 
+# The actual driving control is done by "hector_local_local_planner"
+#
+
+HectorBaseLocalPlanner:
+
+  hector_local_global_planner: SBPLLatticePlanner
+      #hector_global_planner/HectorGlobalPlanner
+      #SBPLLatticePlanner  
+      #navfn/NavfnROS
+  
+  hector_local_local_planner: base_local_planner/TrajectoryPlannerROS
+      #dwa_local_planner/DWAPlannerROS
+      #pose_follower/PoseFollower
+      #base_local_planner/TrajectoryPlannerROS
+
+  # horizon: The local planner picks a point from the global_plan and 
+  # lets "hector_local_global_planner" describe a current_local path.
+  # "horizon" sets the distance to that point.
+  horizon: 10.0
+  
+  # When are we close enough to our goal?
+  goalRadius: 0.51
+  
+  # Used to trigger when to create a new local plan. Distance to 
+  # current_local path end. 
+  flyByRadius: 0.3
+
+  # defines the time which shall past to the next update of the global_global planner
+  # Types:  	0     : always update
+  # 		-val  : never time update
+  # 		+val  : the time in secs till next update.
+  updateFrequency: 5.0
+  
+  path_optimization_lookahead: 30
+  path_optimization_threshold: 0.2
+  
+  opening_angle_global_plan: 1.7
+  xy_offset_global_plan: 0.4
+  
+  
+  ### IMPORTANT: (horizon*0.9) > goalRadius > flyByRadius   !!!!
+
+
+
+SBPLLatticePlanner:
+  environment_type: XYThetaLattice
+  planner_type: ARAPlanner
+  allocated_time: 3.0
+  initial_epsilon: 3.0
+  forward_search: false
+    
+TrajectoryPlannerROS:
+  max_vel_x: 0.4
+  min_vel_x: 0.15
+  y_vels: []
+  max_rotational_vel: 1.0
+  min_in_place_rotational_vel: 0.1
+  escape_reset_dist: 0.8
+  escape_reset_theta: 0.0
+
+  acc_lim_th: 1.0
+  acc_lim_x: 1.0
+  acc_lim_y: 0.0
+
+  holonomic_robot: false
+  recovery_behavior_enabled: false
+  clearing_rotation_allowed: false
+  escape_vel: -0.2
+  dwa: false
+
+  yaw_goal_tolerance: 1
+  xy_goal_tolerance: 0.2
+  latch_xy_goal_tolerance: true
+
+  meter_scoring: false
+  path_distance_bias: 1
+  goal_distance_bias: 0.1
+  occdist_scale: 0.01
+  heading_lookahead: 0.325
+  heading_scoring: false
+  heading_scoring_timestep: 0.8
+#   prune_plan: true
+
+# isGoalReached wird nur gesetzt, wenn Simulation den Punkt erreichen kann
+#   sim_time: 1
+#   sim_granularity: 1
+#   vx_samples: 1
+#   vtheta_samples: 1
+
+DWALocalPlanner:
+  penalize_negative_x: false
+
+PoseFollower:
+#   k_trans: 4.0
+#   k_rot: 2.0
+  tolerance_trans: 0.2
+  tolerance_rot: 1
+  tolerance_timeout: 0.5
+#   max_vel_lin: 0.3
+#   max_vel_th: 1.0
+#   samples: 30
+  holonomic: false

@@ -1,0 +1,11 @@
+<launch>
+  <node pkg="hector_move_base" type="hector_move_base" respawn="false" name="move_base" output="screen" >
+
+    <param name="SBPLLatticePlanner/primitive_filename" value="$(find hector_move_base)/mprim/crab_higher_cost_only_back.mprim" />
+    
+    <rosparam file="$(find hector_move_base)/params/hector_move_base_params.yaml" command="load" />
+    <rosparam file="$(find hector_move_base)/params/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(find hector_move_base)/params/hector_global_planner_params.yaml" command="load" />
+    
+  </node>
+</launch>

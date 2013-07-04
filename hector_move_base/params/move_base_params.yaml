@@ -1,0 +1,22 @@
+footprint: [[0.29, 0.105],
+            [0.24, 0.21],
+            [-0.24, 0.21],
+            [-0.29, 0.105],
+            [-0.29, -0.105],
+            [-0.24, -0.21],
+            [0.24, -0.21],
+            [0.29, -0.105]]
+
+controller_frequency: 5.0
+max_local_replaning: 1
+planner_patience: 1
+exploration_replan_time: 5.0
+oscillation_distance: 0.1
+oscillation_timeout: 3.0
+oscillation_count: 2
+horizon_local_planner: 30
+
+shutdown_costmaps: false
+clearing_radius: 0.4
+footprint_padding: 0.01
+recovery_behaviors: []

@@ -1,0 +1,22 @@
+<package>
+  <description brief="hector_nav_msgs_tools">
+
+     hector_nav_msgs_tools
+
+  </description>
+  <author>stefan</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/hector_nav_msgs_tools</url>
+  <depend package="nav_msgs"/>
+  <depend package="geometry_msgs"/>
+
+  <rosdep name="eigen"/>
+
+  <export>
+    <cpp cflags="`pkg-config --cflags eigen3` -I${prefix}/include" />
+  </export>
+
+</package>
+
+

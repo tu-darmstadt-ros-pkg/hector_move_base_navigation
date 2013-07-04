@@ -1,0 +1,27 @@
+<package>
+  <description brief="hector_move_base">
+
+     hector_move_base
+
+  </description>
+  <author>Florian Kunz</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/hector_move_base</url>
+  <depend package="actionlib_msgs"/>
+  <depend package="move_base_msgs"/>
+  <depend package="nav_core"/>
+  <depend package="hector_move_base_msgs"/>
+  <depend package="hector_nav_core"/>
+  <depend package="hector_nav_msgs_tools"/>
+  <depend package="std_msgs"/>
+
+  <!-- used plugins: -->
+  <!-- Note: These packages are not real dependencies, as they are not required at build time. They only need to be available at run time if you use the provided example configuration files. -->
+  <depend package="hector_exploration_planner" />
+  <depend package="inverse_trajectory_recovery" />
+  <depend package="hector_nav_core_exploration_plugin" />
+
+</package>
+
+

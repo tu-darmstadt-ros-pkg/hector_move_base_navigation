@@ -1,0 +1,9 @@
+<library path="lib/libhector_wall_planner">
+	<class name="hector_wall_planner/HectorWallPlanner" type="hector_wall_planner::HectorWallPlanner" base_class_type="nav_core::BaseGlobalPlanner">
+	<description>
+          A global planner using the exploration transform algorithm
+	</description>
+   </class>
+</library>
+
+

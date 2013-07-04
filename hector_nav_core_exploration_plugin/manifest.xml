@@ -1,0 +1,21 @@
+<package>
+  <description brief="hector_nav_core_exploration_plugin">
+
+     hector_nav_core_exploration_plugin
+
+  </description>
+  <author>kohlbrecher</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/hector_nav_core_exploration_plugin</url>
+  
+  <depend package="hector_nav_core"/>
+  <depend package="hector_exploration_planner"/>
+  
+  <export>
+    <hector_nav_core plugin="${prefix}/hector_nav_core_exploration_plugin.xml" />
+  </export>
+
+</package>
+
+

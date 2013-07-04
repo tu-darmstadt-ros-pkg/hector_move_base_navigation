@@ -1,0 +1,24 @@
+<package>
+  <description brief="hector_wall_planner">
+
+     hector_wall_planner
+
+  </description>
+  <author>Flo</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/hector_wall_planner</url>
+  <depend package="roscpp"/>
+  <depend package="geometry_msgs"/>
+  <depend package="costmap_2d"/>
+  <depend package="nav_core"/>
+  <depend package="pluginlib"/>
+  <depend package="nav_msgs"/>
+  <depend package="rosconsole"/>
+  <depend package="hector_nav_msgs"/>
+
+  <export>
+	<nav_core plugin="${prefix}/hector_wall_planner_plugin.xml" />
+  </export>
+</package>
+

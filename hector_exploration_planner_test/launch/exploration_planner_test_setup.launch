@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+
+<launch>
+  
+   <node pkg="hector_exploration_planner_test" type="exploration_planner_test_node" name="exploration_planner_test_node" output="screen">
+    <rosparam file="$(find hector_exploration_planner_test)/config/costmap.yaml" command="load" />
+   </node>
+   
+   <node pkg="hector_exploration_planner_test" type="pose_with_cov_to_tf_node" name="pose_with_cov_to_tf_node" output="screen"/>
+   
+   <node name="map_server" pkg="map_server" type="map_server" args="/home/kohlbrecher/logs/RCGO2011/RCGO2011_Hector_Mission5_2.yaml" />
+</launch>
+

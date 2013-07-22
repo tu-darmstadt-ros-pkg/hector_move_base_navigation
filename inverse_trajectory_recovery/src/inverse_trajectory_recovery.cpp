@@ -75,8 +75,7 @@ void InverseTrajectoryRecovery::initialize(std::string name, tf::TransformListen
     blp_nh.param("min_radius", min_radius_, 0.30);
     */
 
-    local_costmap_->getCostmapCopy(costmap_);
-    world_model_ = new base_local_planner::CostmapModel(costmap_);
+    world_model_ = new base_local_planner::CostmapModel(*local_costmap_->getCostmap());
 
     initialized_ = true;
   }

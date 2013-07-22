@@ -82,7 +82,6 @@ namespace inverse_trajectory_recovery{
 
     private:
       costmap_2d::Costmap2DROS* global_costmap_, *local_costmap_;
-      costmap_2d::Costmap2D costmap_;
       std::string name_;
 
       tf::TransformListener* tf_;

@@ -18,7 +18,6 @@ namespace hector_move_base_handler {
 class HectorStuckRecoveryHandler : public HectorMoveBaseHandler {
 private:
     costmap_2d::Costmap2DROS* costmap_;
-    costmap_2d::Costmap2D local_costmap_;
     tf::TransformListener& tf_;
 
     ros::ServiceClient inverse_trajectory_service_client_;
@@ -50,8 +49,7 @@ public:
         path_pub_ = controller_nh.advertise<hector_move_base_msgs::MoveBaseActionGeneric>("generic",1);
         path_drive_feedback_sub_ = controller_nh.subscribe("result", 5, &HectorStuckRecoveryHandler::resultCallback, this);
 
-        costmap_->getCostmapCopy(local_costmap_);
-        world_model_ = new base_local_planner::CostmapModel(local_costmap_);
+        world_model_ = new base_local_planner::CostmapModel(*costmap_->getCostmap());
 
         counter = 0;
     }

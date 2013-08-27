@@ -21,7 +21,7 @@ private:
     double angular_limit_for_plan_, sq_xy_limit_for_plan_;
     int horizon_for_trajectory_;
     ros::Publisher pointer_on_path_pub_, robot_pointer_pub_;
-    nav_core::BaseGlobalPlanner* trajectory_planner_;
+    boost::shared_ptr<nav_core::BaseGlobalPlanner> trajectory_planner_;
 
 public:
     HectorRefinePlanHandler(hector_move_base::IHectorMoveBase* interface) : HectorMoveBaseHandler(interface){
@@ -56,7 +56,7 @@ public:
                     }
                 }
             }
-            trajectory_planner_ = bgp_loader_.createClassInstance(path_planner);
+            trajectory_planner_ = bgp_loader_.createInstance(path_planner);
             trajectory_planner_->initialize(bgp_loader_.getName(path_planner), costmap_);
         }
         catch (const pluginlib::PluginlibException& ex) {
@@ -203,6 +203,9 @@ public:
             ROS_ERROR("[refine_plan_handler]: makePlan failed due to costmap being NULL pointer");
             return false;
         }
+
+        // lock costmap
+        boost::unique_lock< boost::shared_mutex > lock(*(costmap_->getCostmap()->getLock()));
 
         //get the starting pose of the robot
         tf::Stamped<tf::Pose> global_pose;

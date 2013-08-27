@@ -59,6 +59,9 @@ public:
             return hector_move_base::FAIL;
         }
 
+        // lock costmap
+        boost::unique_lock< boost::shared_mutex > lock(*(costmap_->getCostmap()->getLock()));
+
         //get the starting pose of the robot
         tf::Stamped<tf::Pose> global_pose;
         if(!costmap_->getRobotPose(global_pose)){

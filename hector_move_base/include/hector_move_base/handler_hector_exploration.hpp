@@ -10,7 +10,7 @@ namespace hector_move_base_handler {
 class HectorExplorationHandler : public HectorMoveBaseHandler {
 private:
     costmap_2d::Costmap2DROS* costmap_;
-    hector_nav_core::ExplorationPlanner* exploration_planner_;
+    boost::shared_ptr<hector_nav_core::ExplorationPlanner> exploration_planner_;
 
 public:
     HectorExplorationHandler(hector_move_base::IHectorMoveBase* interface) : HectorMoveBaseHandler(interface){
@@ -39,7 +39,7 @@ public:
                 }
             }
 
-            exploration_planner_ = expl_loader_.createClassInstance(exploration_planner_name);
+            exploration_planner_ = expl_loader_.createInstance(exploration_planner_name);
             exploration_planner_->initialize(expl_loader_.getName(exploration_planner_name), costmap_);
         } catch (const pluginlib::PluginlibException& ex)
         {
@@ -109,6 +109,9 @@ public:
           ROS_ERROR("[exploration_handler]: makePlan failed due to costmap being NULL pointer");
           return false;
       }
+
+      // lock costmap
+      boost::unique_lock< boost::shared_mutex > lock(*(costmap_->getCostmap()->getLock()));
 
       //get the starting pose of the robot
       tf::Stamped<tf::Pose> global_pose;

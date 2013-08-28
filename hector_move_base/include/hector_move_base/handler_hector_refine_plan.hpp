@@ -21,10 +21,13 @@ private:
     double angular_limit_for_plan_, sq_xy_limit_for_plan_;
     int horizon_for_trajectory_;
     ros::Publisher pointer_on_path_pub_, robot_pointer_pub_;
+    pluginlib::ClassLoader<nav_core::BaseGlobalPlanner> bgp_loader_;
     boost::shared_ptr<nav_core::BaseGlobalPlanner> trajectory_planner_;
 
 public:
-    HectorRefinePlanHandler(hector_move_base::IHectorMoveBase* interface) : HectorMoveBaseHandler(interface){
+    HectorRefinePlanHandler(hector_move_base::IHectorMoveBase* interface) : HectorMoveBaseHandler(interface)
+      , bgp_loader_("nav_core", "nav_core::BaseGlobalPlanner")
+    {
         costmap_ = interface->getCostmap();
         ros::NodeHandle private_nh("~");
 
@@ -36,8 +39,6 @@ public:
 
         pointer_on_path_pub_ = private_nh.advertise<geometry_msgs::PoseStamped>("plan_orientation", 0);
         robot_pointer_pub_ = private_nh.advertise<geometry_msgs::PoseStamped>("robot_orientation", 0);
-
-        pluginlib::ClassLoader<nav_core::BaseGlobalPlanner> bgp_loader_("nav_core", "nav_core::BaseGlobalPlanner");
 
         std::string path_planner = "SBPLLatticePlanner";
         private_nh.param("path_planner", path_planner, path_planner);

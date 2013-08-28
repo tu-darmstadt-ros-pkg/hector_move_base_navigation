@@ -10,14 +10,15 @@ namespace hector_move_base_handler {
 class HectorPlanningHandler : public HectorMoveBaseHandler {
 private:
     costmap_2d::Costmap2DROS* costmap_;
+    pluginlib::ClassLoader<hector_nav_core::ExplorationPlanner> expl_loader_;
     boost::shared_ptr<hector_nav_core::ExplorationPlanner> exploration_planner_;
 
 public:
-    HectorPlanningHandler(hector_move_base::IHectorMoveBase* interface) : HectorMoveBaseHandler(interface){
+    HectorPlanningHandler(hector_move_base::IHectorMoveBase* interface) : HectorMoveBaseHandler(interface)
+      , expl_loader_("hector_nav_core", "hector_nav_core::ExplorationPlanner")
+    {
         costmap_ = interface->getCostmap();
         ros::NodeHandle private_nh("~");
-
-        pluginlib::ClassLoader<hector_nav_core::ExplorationPlanner> expl_loader_("hector_nav_core", "hector_nav_core::ExplorationPlanner");
 
         std::string exploration_planner_name = "hector_nav_core_exploration_plugin/HectorNavCoreExplorationPlugin";
         private_nh.param("exploration_planner", exploration_planner_name, exploration_planner_name);

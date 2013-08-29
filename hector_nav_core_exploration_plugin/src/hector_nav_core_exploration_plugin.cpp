@@ -27,22 +27,23 @@
 //=================================================================================================
 
 #include <hector_nav_core_exploration_plugin/hector_nav_core_exploration_plugin.h>
+#include <hector_nav_core_exploration_plugin/exploration_planner_loader.h>
 
 namespace hector_nav_core{
 
 HectorNavCoreExplorationPlugin::HectorNavCoreExplorationPlugin()
 {
-  exploration_planner = new hector_exploration_planner::HectorExplorationPlanner();
 }
 
 HectorNavCoreExplorationPlugin::~HectorNavCoreExplorationPlugin()
 {
-  delete exploration_planner;
 }
 
 bool HectorNavCoreExplorationPlugin::makePlan(const geometry_msgs::PoseStamped& start,
                       const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan, const float& distance)
 {
+  if (!exploration_planner) return false;
+
     if (distance <= 0) {
       return exploration_planner->makePlan(start, goal, plan);
     } else {
@@ -57,12 +58,18 @@ bool HectorNavCoreExplorationPlugin::makePlan(const geometry_msgs::PoseStamped& 
 bool HectorNavCoreExplorationPlugin::doExploration(const geometry_msgs::PoseStamped &start,
     std::vector<geometry_msgs::PoseStamped> &plan)
 {
+  if (!exploration_planner) return false;
   return exploration_planner->doExploration(start, plan);
 }
 
 void HectorNavCoreExplorationPlugin::initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros)
 {
-  exploration_planner->initialize(name, costmap_ros);
+  exploration_planner = ExplorationPlannerLoader::GetInstance(name);
+
+  if (exploration_planner.use_count() == 1) {
+    // initialize only on first use
+    exploration_planner->initialize(name, costmap_ros);
+  }
 }
 
 }

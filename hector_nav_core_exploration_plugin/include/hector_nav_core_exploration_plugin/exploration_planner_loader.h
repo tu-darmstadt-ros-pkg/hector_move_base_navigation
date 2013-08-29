@@ -1,5 +1,5 @@
 //=================================================================================================
-// Copyright (c) 2012, Mark Sollweck, Stefan Kohlbrecher, TU Darmstadt
+// Copyright (c) 2013, Johannes Meyer and contributors, Technische Universitat Darmstadt
 // All rights reserved.
 
 // Redistribution and use in source and binary forms, with or without
@@ -9,8 +9,8 @@
 //     * Redistributions in binary form must reproduce the above copyright
 //       notice, this list of conditions and the following disclaimer in the
 //       documentation and/or other materials provided with the distribution.
-//     * Neither the name of the Simulation, Systems Optimization and Robotics
-//       group, TU Darmstadt nor the names of its contributors may be used to
+//     * Neither the name of the Flight Systems and Automatic Control group,
+//       TU Darmstadt, nor the names of its contributors may be used to
 //       endorse or promote products derived from this software without
 //       specific prior written permission.
 
@@ -26,36 +26,51 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //=================================================================================================
 
-#ifndef HECTOR_NAV_CORE_EXPLORATION_PLUGIN_H___
-#define HECTOR_NAV_CORE_EXPLORATION_PLUGIN_H___
+
+#ifndef HECTOR_MOVE_BASE_EXPLORATION_PLANNER_LOADER_H
+#define HECTOR_MOVE_BASE_EXPLORATION_PLANNER_LOADER_H
 
 #include <hector_exploration_planner/hector_exploration_planner.h>
-#include <hector_nav_core/exploration_planner.h>
+//#include <pluginlib/class_loader.h>
 
-namespace hector_nav_core{
+#include <boost/weak_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 
-class HectorNavCoreExplorationPlugin : public hector_nav_core::ExplorationPlanner
-{
+#include <map>
+
+namespace hector_nav_core {
+
+template<typename T, typename _Key = std::string>
+class SingletonLoader {
+private:
+//  pluginlib::ClassLoader<T> expl_loader_;
+
+  static boost::shared_ptr<T> createInstance()
+  {
+    return boost::shared_ptr<T>(new T());
+  }
+
 public:
-  HectorNavCoreExplorationPlugin();
+  typedef _Key KeyType;
 
-  virtual ~HectorNavCoreExplorationPlugin();
+  static boost::shared_ptr<T> GetInstance(const KeyType& name = std::string())
+  {
+    static std::map<KeyType,boost::weak_ptr<T> > s_singleton;
+    boost::shared_ptr<T> instance;
 
-  virtual bool makePlan(const geometry_msgs::PoseStamped& start,
-                        const geometry_msgs::PoseStamped& goal,
-                        std::vector<geometry_msgs::PoseStamped>& plan,
-                        const float& distance);
+    if (s_singleton[name].expired()) {
+      instance = createInstance();
+      s_singleton[name] = instance;
+    } else {
+      instance = s_singleton[name].lock();
+    }
 
-  virtual bool doExploration(const geometry_msgs::PoseStamped &start,
-      std::vector<geometry_msgs::PoseStamped> &plan);
-
-  virtual void initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros);
-
-protected:
-  boost::shared_ptr<hector_exploration_planner::HectorExplorationPlanner> exploration_planner;
+    return instance;
+  }
 };
 
+typedef SingletonLoader<hector_exploration_planner::HectorExplorationPlanner> ExplorationPlannerLoader;
 
-}
+} // namespace
 
-#endif
+#endif // HECTOR_MOVE_BASE_EXPLORATION_PLANNER_LOADER_H

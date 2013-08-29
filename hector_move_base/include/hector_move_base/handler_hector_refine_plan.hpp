@@ -216,7 +216,7 @@ public:
 
         //shorten plan, so that trajectory is generated for short distances only
         if(plan.size() > (std::size_t) horizon_for_trajectory_) {
-            ROS_DEBUG("[refine_plan_handler]: erasing part of global_plan, because it is too long (%i > %i)", plan.size(), horizon_for_trajectory_);
+            ROS_DEBUG("[refine_plan_handler]: erasing part of global_plan, because it is too long (%lu > %i)", plan.size(), horizon_for_trajectory_);
             goalForTrajectory = plan[horizon_for_trajectory_];
         }
         else {

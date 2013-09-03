@@ -113,7 +113,7 @@ public:
       // lock costmap
 #ifdef LAYERED_COSTMAP_H_
       boost::unique_lock< boost::shared_mutex > lock(*(costmap_->getCostmap()->getLock()));
-#endif LAYERED_COSTMAP_H_
+#endif // LAYERED_COSTMAP_H_
 
       //get the starting pose of the robot
       tf::Stamped<tf::Pose> global_pose;

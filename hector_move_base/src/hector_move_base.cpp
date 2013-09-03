@@ -187,13 +187,16 @@ void HectorMoveBase::pushCurrentGoal(const handlerActionGoal &goalToAdd) {
 
 void HectorMoveBase::sendActionGoal(const handlerActionGoal& goalToSend) {
     hector_move_base_msgs::MoveBaseActionPath pathToSend;
+
     pathToSend.goal_id = goalToSend.goal_id;
     pathToSend.goal.speed = goalToSend.speed;
     pathToSend.goal.target_path.header = goalToSend.target_pose.header;
+
     geometry_msgs::PoseStamped targetPose;
     targetPose.header = goalToSend.target_pose.header;
     targetPose.pose = goalToSend.target_pose.pose;
     pathToSend.goal.target_path.poses.push_back(targetPose);
+
     drivepath_pub_.publish(pathToSend);
 }
 
@@ -202,6 +205,11 @@ hector_move_base_msgs::MoveBaseActionPath HectorMoveBase::getCurrentActionPath()
 }
 
 void HectorMoveBase::setActionPath (hector_move_base_msgs::MoveBaseActionPath path) {
+    if (path.goal.target_path.header.frame_id.empty()) {
+        path.goal.target_path.header.frame_id = costmap_->getGlobalFrameID();
+        ROS_WARN("[hector_move_base]: planner returned a path with empty frame_id. Assuming %s frame.", path.goal.target_path.header.frame_id.c_str());
+    }
+
     path_ = path;
 }
 
@@ -464,6 +472,7 @@ void HectorMoveBase::clearGoal() {
     goals_.clear();
     path_ = hector_move_base_msgs::MoveBaseActionPath();
     hector_move_base_msgs::MoveBaseActionPath empty_path = hector_move_base_msgs::MoveBaseActionPath();
+    empty_path.header.frame_id = costmap_->getGlobalFrameID();
     empty_path.goal_id.id = "empty_path";
     sendActionPath(empty_path);
     setNextState(idleState_);

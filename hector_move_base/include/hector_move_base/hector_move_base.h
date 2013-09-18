@@ -58,7 +58,7 @@ private:
     std::vector<handlerActionGoal> goals_;
     hector_move_base_msgs::MoveBaseActionPath path_;
     ros::Publisher current_goal_pub_, drivepath_pub_, feedback_pub_, result_pub_, goalmarker_pub_;
-    ros::Subscriber cancel_sub_, controller_result_sub_, explore_sub_, goal_sub_, observation_sub_, reset_sub_, simple_goal_sub_;
+    ros::Subscriber cancel_sub_, controller_result_sub_, explore_sub_, goal_sub_, observation_sub_, syscommand_sub_, simple_goal_sub_;
 
     boost::recursive_mutex currentStatMutex_;
 
@@ -102,7 +102,7 @@ private:
     void simple_goalCB(const geometry_msgs::PoseStamped::ConstPtr& simpleGoal);
     void cmd_velCB(const ros::MessageEvent<geometry_msgs::Twist>& event);
     void cancelCB(const std_msgs::Empty::ConstPtr& empty);
-    void resetCB(const std_msgs::String::ConstPtr& string);
+    void syscommandCB(const std_msgs::String::ConstPtr& string);
     void controllerResultCB(const hector_move_base_msgs::MoveBaseActionResult::ConstPtr& result);
 
     void moveBaseLoop(ros::NodeHandle&, ros::Rate);

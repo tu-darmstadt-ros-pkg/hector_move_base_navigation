@@ -121,7 +121,7 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     observation_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionGoal>("observe", 1, boost::bind(&HectorMoveBase::observationCB, this, _1));
     simple_goal_sub_ = private_nh_.subscribe<geometry_msgs::PoseStamped>("simple_goal", 1, boost::bind(&HectorMoveBase::simple_goalCB, this, _1));
     cancel_sub_ = private_nh_.subscribe<std_msgs::Empty>("cancel", 1, boost::bind(&HectorMoveBase::cancelCB, this, _1));
-    reset_sub_ = nh.subscribe<std_msgs::String>("syscommand", 1, boost::bind(&HectorMoveBase::resetCB, this, _1));
+    syscommand_sub_ = nh.subscribe<std_msgs::String>("syscommand", 1, boost::bind(&HectorMoveBase::syscommandCB, this, _1));
 
     controller_result_sub_ = controller_nh.subscribe<hector_move_base_msgs::MoveBaseActionResult>("result", 1, boost::bind(&HectorMoveBase::controllerResultCB, this, _1));
 
@@ -334,10 +334,30 @@ void HectorMoveBase::cancelCB(const std_msgs::Empty::ConstPtr& empty){
     setNextState(idleState_);
 }
 
-void HectorMoveBase::resetCB(const std_msgs::String::ConstPtr& string){
-    ROS_DEBUG("[hector_move_base]: In reset callback");
-    abortedGoal();
-    setNextState(idleState_);
+void HectorMoveBase::syscommandCB(const std_msgs::String::ConstPtr& string){
+    ROS_DEBUG("[hector_move_base]: In syscommandCB callback: %s", string->data.c_str());
+
+    if (string->data == "reset") {
+      abortedGoal();
+      setNextState(idleState_);
+
+      // reset costmap
+#ifdef LAYERED_COSTMAP_H_
+      costmap_->getCostmap()->resetMap(0, 0, costmap_->getCostmap()->getSizeInCellsX(), costmap_->getCostmap()->getSizeInCellsX());
+#endif // LAYERED_COSTMAP_H_
+    }
+
+    if (string->data == "explore")
+    {
+      abortedGoal();
+      handlerActionGoal newGoal = handlerActionGoal();
+      newGoal.goal_id.stamp = ros::Time::now();
+      newGoal.goal_id.id = "simple_explore";
+      newGoal.do_exploration = false;
+      pushCurrentGoal(newGoal);
+      setNextState(planningState_);
+    }
+
     return;
 }
 

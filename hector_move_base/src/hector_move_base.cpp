@@ -343,7 +343,7 @@ void HectorMoveBase::syscommandCB(const std_msgs::String::ConstPtr& string){
 
       // reset costmap
 #ifdef LAYERED_COSTMAP_H_
-      costmap_->getCostmap()->resetMap(0, 0, costmap_->getCostmap()->getSizeInCellsX(), costmap_->getCostmap()->getSizeInCellsX());
+      costmap_->resetLayers();
 #endif // LAYERED_COSTMAP_H_
     }
 

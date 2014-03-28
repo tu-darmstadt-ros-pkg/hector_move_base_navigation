@@ -7,13 +7,10 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     private_nh_("~"),
     statemachine_(new HectorMoveBaseStateMachine),
     tf_(tf),
-    main_loop_thread_(NULL){
+    main_loop_thread_(NULL),
+    move_base_plugin_loader_("nav_core", "nav_core::RecoveryBehavior"){
 
     ros::NodeHandle nh;
-
-    double controllerFrequencyParam;
-    private_nh_.param("controller_frequency", controllerFrequencyParam, 1.0);
-    ros::Rate controllerFrequency(controllerFrequencyParam);
 
     private_nh_.param("circumscribed_radius", circumscribedRadius_, 0.3);
     private_nh_.param("time_to_trigger_replanning", timeToTriggerReplannning_, 2.0);
@@ -23,6 +20,7 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     private_nh_.param("goal_reached_linear_variance", goalReachedLinearVariance, M_PI_4);
     goalReachedSquaredLinearVariance_ = goalReachedLinearVariance * goalReachedLinearVariance;
     private_nh_.param("controller_namespace", controller_namespace_, std::string("/controller"));
+    private_nh_.param("use_alternate_planner", use_alternate_planner_, true);
 
     costmap_ = new costmap_2d::Costmap2DROS("global_costmap", tf_);
     ROS_DEBUG("[hector_move_base]: costmap loaded");
@@ -45,12 +43,22 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
 
     std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForExploration;
     mappingForExploration.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, planningState_));
-    mappingForExploration.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(ALTERNATIVE, refinePlanState_));
+    if (use_alternate_planner_) {
+        mappingForExploration.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(ALTERNATIVE, refinePlanState_));
+    }
+    else {
+        mappingForExploration.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(ALTERNATIVE, publishPathState_));
+    }
     mappingForExploration.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(FAIL, stuckRecoveryState_));
     statemachine_->addHandlerMapping(exploringState_, mappingForExploration);
 
     std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPlanning;
-    mappingForPlanning.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, refinePlanState_));
+    if (use_alternate_planner_) {
+        mappingForPlanning.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, refinePlanState_));
+    }
+    else {
+        mappingForPlanning.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, publishPathState_));
+    }
     mappingForPlanning.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(ALTERNATIVE, exploringState_));
     mappingForPlanning.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(FAIL, stuckRecoveryState_));
     statemachine_->addHandlerMapping(planningState_, mappingForPlanning);
@@ -231,6 +239,126 @@ tf::TransformListener& HectorMoveBase::getTransformListener() {
     return tf_;
 }
 
+bool HectorMoveBase::loadMoveBasePlugins(ros::NodeHandle node){
+  XmlRpc::XmlRpcValue behavior_list;
+  if(node.getParam("recovery_behaviors", behavior_list)){
+    if(behavior_list.getType() == XmlRpc::XmlRpcValue::TypeArray){
+      for(int i = 0; i < behavior_list.size(); ++i){
+        if(behavior_list[i].getType() == XmlRpc::XmlRpcValue::TypeStruct){
+          if(behavior_list[i].hasMember("name") && behavior_list[i].hasMember("type")){
+            //check for recovery behaviors with the same name
+            for(int j = i + 1; j < behavior_list.size(); j++){
+              if(behavior_list[j].getType() == XmlRpc::XmlRpcValue::TypeStruct){
+                if(behavior_list[j].hasMember("name") && behavior_list[j].hasMember("type")){
+                  std::string name_i = behavior_list[i]["name"];
+                  std::string name_j = behavior_list[j]["name"];
+                  if(name_i == name_j){
+                    ROS_ERROR("A recovery behavior with the name %s already exists, this is not allowed. Using the default recovery behaviors instead.",
+                        name_i.c_str());
+                    return false;
+                  }
+                }
+              }
+            }
+          }
+          else{
+            ROS_ERROR("Recovery behaviors must have a name and a type and this does not. Using the default recovery behaviors instead.");
+            return false;
+          }
+        }
+        else{
+          ROS_ERROR("Recovery behaviors must be specified as maps, but they are XmlRpcType %d. We'll use the default recovery behaviors instead.",
+              behavior_list[i].getType());
+          return false;
+        }
+      }
+
+      //if we've made it to this point, we know that the list is legal so we'll create all the recovery behaviors
+      for(int i = 0; i < behavior_list.size(); ++i){
+        try{
+          //check if a non fully qualified name has potentially been passed in
+          if(!move_base_plugin_loader_.isClassAvailable(behavior_list[i]["type"])){
+            std::vector<std::string> classes = move_base_plugin_loader_.getDeclaredClasses();
+            for(unsigned int i = 0; i < classes.size(); ++i){
+              if(behavior_list[i]["type"] == move_base_plugin_loader_.getName(classes[i])){
+                //if we've found a match... we'll get the fully qualified name and break out of the loop
+                ROS_WARN("Recovery behavior specifications should now include the package name. You are using a deprecated API. Please switch from %s to %s in your yaml file.",
+                    std::string(behavior_list[i]["type"]).c_str(), classes[i].c_str());
+                behavior_list[i]["type"] = classes[i];
+                break;
+              }
+            }
+          }
+
+          boost::shared_ptr<nav_core::RecoveryBehavior> behavior(move_base_plugin_loader_.createInstance(behavior_list[i]["type"]));
+
+          //shouldn't be possible, but it won't hurt to check
+          if(behavior.get() == NULL){
+            ROS_ERROR("The ClassLoader returned a null pointer without throwing an exception. This should not happen");
+            return false;
+          }
+
+          //initialize the recovery behavior with its name
+          behavior->initialize(behavior_list[i]["name"], &tf_, costmap_, costmap_);
+          move_base_plugins_.push_back(behavior);
+        }
+        catch(pluginlib::PluginlibException& ex){
+          ROS_ERROR("Failed to load a plugin. Using default recovery behaviors. Error: %s", ex.what());
+          return false;
+        }
+      }
+    }
+    else{
+      ROS_ERROR("The recovery behavior specification must be a list, but is of XmlRpcType %d. We'll use the default recovery behaviors instead.",
+          behavior_list.getType());
+      return false;
+    }
+  }
+  else{
+    //if no recovery_behaviors are specified, we'll just load the defaults
+    return false;
+  }
+
+  //if we've made it here... we've constructed a recovery behavior list successfully
+  return true;
+}
+
+//we'll load our default recovery behaviors here
+void HectorMoveBase::loadDefaultMoveBasePlugins(){
+  move_base_plugins_.clear();
+  try{
+    //we need to set some parameters based on what's been passed in to us to maintain backwards compatibility
+    ros::NodeHandle n("~");
+    n.setParam("conservative_reset/reset_distance", 0.2);
+    n.setParam("aggressive_reset/reset_distance", 0.3 * 4);
+
+    //first, we'll load a recovery behavior to clear the costmap
+    boost::shared_ptr<nav_core::RecoveryBehavior> cons_clear(move_base_plugin_loader_.createInstance("clear_costmap_recovery/ClearCostmapRecovery"));
+    cons_clear->initialize("conservative_reset", &tf_, costmap_, costmap_);
+    move_base_plugins_.push_back(cons_clear);
+
+    //next, we'll load a recovery behavior to rotate in place
+    boost::shared_ptr<nav_core::RecoveryBehavior> rotate(move_base_plugin_loader_.createInstance("rotate_recovery/RotateRecovery"));
+    if(false){
+      rotate->initialize("rotate_recovery", &tf_, costmap_, costmap_);
+      move_base_plugins_.push_back(rotate);
+    }
+
+    //next, we'll load a recovery behavior that will do an aggressive reset of the costmap
+    boost::shared_ptr<nav_core::RecoveryBehavior> ags_clear(move_base_plugin_loader_.createInstance("clear_costmap_recovery/ClearCostmapRecovery"));
+    ags_clear->initialize("aggressive_reset", &tf_, costmap_, costmap_);
+    move_base_plugins_.push_back(ags_clear);
+
+    //we'll rotate in-place one more time
+    if(false)
+      move_base_plugins_.push_back(rotate);
+  }
+  catch(pluginlib::PluginlibException& ex){
+    ROS_FATAL("Failed to load a plugin. This should not happen on default recovery behaviors. Error: %s", ex.what());
+  }
+
+  return;
+}
 
 void HectorMoveBase::exploreCB(const hector_move_base_msgs::MoveBaseActionExplore::ConstPtr& goal){
     ROS_DEBUG("[hector_move_base]: In explore callback");

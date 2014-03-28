@@ -55,10 +55,13 @@ private:
 
     double circumscribedRadius_, timeToTriggerReplannning_, timeToTriggerExploration_, goalReachchedAngularVariance_, goalReachedSquaredLinearVariance_;
     std::string controller_namespace_;
+    bool use_alternate_planner_;
     std::vector<handlerActionGoal> goals_;
     hector_move_base_msgs::MoveBaseActionPath path_;
     ros::Publisher current_goal_pub_, drivepath_pub_, feedback_pub_, result_pub_, goalmarker_pub_;
     ros::Subscriber cancel_sub_, controller_result_sub_, explore_sub_, goal_sub_, observation_sub_, syscommand_sub_, simple_goal_sub_;
+    pluginlib::ClassLoader<nav_core::RecoveryBehavior> move_base_plugin_loader_;
+    std::vector<boost::shared_ptr<nav_core::RecoveryBehavior> > move_base_plugins_;
 
     boost::recursive_mutex currentStatMutex_;
 
@@ -93,6 +96,9 @@ public:
     void moveBaseStep();
 
 private:
+    bool loadMoveBasePlugins(ros::NodeHandle node);
+    void loadDefaultMoveBasePlugins();
+
     /**
    * callback methods
    */

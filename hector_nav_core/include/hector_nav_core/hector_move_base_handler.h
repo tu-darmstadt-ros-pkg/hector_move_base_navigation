@@ -19,11 +19,11 @@ class HectorMoveBaseHandler{
 protected:
     hector_move_base::IHectorMoveBase* hectorMoveBaseInterface;
 
-public:
     HectorMoveBaseHandler(hector_move_base::IHectorMoveBase* interface) {
         hectorMoveBaseInterface = interface;
     }
 
+public:
     virtual hector_move_base::RESULT handle() {
         ROS_WARN("[hector_move_base_handler]: virtual function handle() was not implemented, but called");
         return hector_move_base::FAIL;

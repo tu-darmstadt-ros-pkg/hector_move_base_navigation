@@ -7,13 +7,12 @@ footprint: [[0.29, 0.105],
             [0.24, -0.21],
             [0.29, -0.105]]
 
-controller_frequency: 0.5
 planner_patience: 3
 sq_dist_for_goal_reached: 0.25
 horizon_for_trajectory: 16
 
 time_to_trigger_exploration: 9.0
-time_to_trigger_replanning: 3.0
+time_to_trigger_replanning: 66.6
 
 angular_limit_for_hgp: M_PI_8
 xy_limit_for_hgp: 0.18

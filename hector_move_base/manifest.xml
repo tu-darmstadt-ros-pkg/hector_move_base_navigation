@@ -9,6 +9,7 @@
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/hector_move_base</url>
   <depend package="actionlib_msgs"/>
+  <depend package="monstertruck_msgs"/>
   <depend package="move_base_msgs"/>
   <depend package="nav_core"/>
   <depend package="hector_move_base_msgs"/>

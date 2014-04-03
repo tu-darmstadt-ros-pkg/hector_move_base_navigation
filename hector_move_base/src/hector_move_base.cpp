@@ -21,6 +21,8 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     goalReachedSquaredLinearVariance_ = goalReachedLinearVariance * goalReachedLinearVariance;
     private_nh_.param("controller_namespace", controller_namespace_, std::string("/controller"));
     private_nh_.param("use_alternate_planner", use_alternate_planner_, true);
+    private_nh_.param("observe_linear_tolerance", observeLinearTolerance_, 0.2);
+    private_nh_.param("observe_angular_tolerance", observeAngularTolerance_, M_PI_2);
 
     costmap_ = new costmap_2d::Costmap2DROS("global_costmap", tf_);
     ROS_DEBUG("[hector_move_base]: costmap loaded");
@@ -132,6 +134,8 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     syscommand_sub_ = nh.subscribe<std_msgs::String>("syscommand", 1, boost::bind(&HectorMoveBase::syscommandCB, this, _1));
 
     controller_result_sub_ = controller_nh.subscribe<hector_move_base_msgs::MoveBaseActionResult>("result", 1, boost::bind(&HectorMoveBase::controllerResultCB, this, _1));
+
+    tolerance_client_ = controller_nh.serviceClient<monstertruck_msgs::SetAlternativeTolerance>("set_alternative_tolerances");
 
     //    ROS_DEBUG("[hector_move_base]: going to create new boost thread for main loop");
     //    main_loop_thread_ = new boost::thread(boost::bind(&HectorMoveBase::moveBaseLoop, this, nh, controllerFrequency));
@@ -404,6 +408,17 @@ void HectorMoveBase::observationCB(const hector_move_base_msgs::MoveBaseActionGo
     newGoal.speed = goal->goal.speed;
     newGoal.do_exploration = false;
     newGoal.distance = goal->goal.distance;
+
+    monstertruck_msgs::SetAlternativeTolerance tolerance_srv;
+    tolerance_srv.request.goalID = goal->goal_id;
+    tolerance_srv.request.linearTolerance = observeLinearTolerance_;
+    tolerance_srv.request.angularTolerance = observeAngularTolerance_;
+    if (tolerance_client_.call(tolerance_srv)) {
+        ROS_INFO("[hector_move_base]: calling tolerance service");
+    }
+    else {
+        ROS_WARN("[hector_move_base]: calling tolerance service FAILED");
+    }
 
     //make sure goal could be transformed to costmap frame
     newGoal.target_pose = goalToGlobalFrame(goal->goal.target_pose);

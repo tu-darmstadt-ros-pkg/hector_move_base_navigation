@@ -52,7 +52,7 @@ private:
     boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> idleState_;
     boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> exploringState_, planningState_, refinePlanState_, publishPathState_, publishFeedbackState_, waitForReplanningState_, waitForReexploringState_;
     boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> publishSuccessState_, publishAbortState_, publishPreemptedState_, publishRejectedState_;
-    boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> stuckRecoveryState_;
+    boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> stuckExplorationRecoveryState_, stuckPlanningRecoveryState_;
     boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> currentState_, nextState_, startState_;
 
     double circumscribedRadius_, timeToTriggerReplannning_, timeToTriggerExploration_, goalReachchedAngularVariance_, goalReachedSquaredLinearVariance_, observeLinearTolerance_, observeAngularTolerance_;

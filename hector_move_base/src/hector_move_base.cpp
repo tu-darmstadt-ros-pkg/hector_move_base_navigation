@@ -38,7 +38,8 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     publishRejectedState_.reset(new hector_move_base_handler::HectorPublishRejectedHandler(this));
     waitForReplanningState_.reset(new hector_move_base_handler::HectorWaitForReplanningHandler(this));
     waitForReexploringState_.reset(new hector_move_base_handler::HectorWaitForReexploringHandler(this));
-    stuckRecoveryState_.reset(new hector_move_base_handler::HectorStuckRecoveryHandler(this));
+    stuckExplorationRecoveryState_.reset(new hector_move_base_handler::HectorStuckRecoveryHandler(this));
+    stuckPlanningRecoveryState_.reset(new hector_move_base_handler::HectorStuckRecoveryHandler(this));
     idleState_.reset(new hector_move_base_handler::HectorIdleHandler(this));
 
     ROS_DEBUG("[hector_move_base]: all states created");
@@ -51,7 +52,7 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     else {
         mappingForExploration.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(ALTERNATIVE, publishPathState_));
     }
-    mappingForExploration.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(FAIL, stuckRecoveryState_));
+    mappingForExploration.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(FAIL, stuckExplorationRecoveryState_));
     statemachine_->addHandlerMapping(exploringState_, mappingForExploration);
 
     std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPlanning;
@@ -62,13 +63,13 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
         mappingForPlanning.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, publishPathState_));
     }
     mappingForPlanning.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(ALTERNATIVE, exploringState_));
-    mappingForPlanning.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(FAIL, stuckRecoveryState_));
+    mappingForPlanning.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(FAIL, stuckPlanningRecoveryState_));
     statemachine_->addHandlerMapping(planningState_, mappingForPlanning);
 
     std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForRefinePlan;
     mappingForRefinePlan.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, publishPathState_));
     mappingForRefinePlan.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(ALTERNATIVE, planningState_));
-    mappingForRefinePlan.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(FAIL, stuckRecoveryState_));
+    mappingForRefinePlan.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(FAIL, stuckPlanningRecoveryState_));
     statemachine_->addHandlerMapping(refinePlanState_, mappingForRefinePlan);
 
     std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPublishPath;
@@ -105,10 +106,15 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     mappingForPublishRejected.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, idleState_));
     statemachine_->addHandlerMapping(publishRejectedState_, mappingForPublishRejected);
 
-    std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForStuckRecovery;
-    mappingForStuckRecovery.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, exploringState_));
-    mappingForStuckRecovery.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(FAIL, publishAbortState_));
-    statemachine_->addHandlerMapping(stuckRecoveryState_, mappingForStuckRecovery);
+    std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForExplorationStuckRecovery;
+    mappingForExplorationStuckRecovery.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, exploringState_));
+    mappingForExplorationStuckRecovery.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(FAIL, publishAbortState_));
+    statemachine_->addHandlerMapping(stuckExplorationRecoveryState_, mappingForExplorationStuckRecovery);
+
+    std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPlanningStuckRecovery;
+    mappingForPlanningStuckRecovery.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, planningState_));
+    mappingForPlanningStuckRecovery.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(FAIL, publishAbortState_));
+    statemachine_->addHandlerMapping(stuckPlanningRecoveryState_, mappingForPlanningStuckRecovery);
 
     std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForIdleState;
     mappingForIdleState.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, idleState_));
@@ -521,8 +527,10 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
 
     case actionlib_msgs::GoalStatus::PREEMPTED:
         ROS_DEBUG("[hector_move_base]: received result from controller == PREEMPTED");
-        if ((currentState_ == stuckRecoveryState_) ||
-                nextState_ == stuckRecoveryState_) {
+        if ((currentState_ == stuckExplorationRecoveryState_) ||
+                (nextState_ == stuckExplorationRecoveryState_) ||
+                (currentState_ == stuckPlanningRecoveryState_) ||
+                (nextState_ == stuckPlanningRecoveryState_)) {
             return;
         }
         preemptedGoal();
@@ -535,7 +543,15 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
 
     case actionlib_msgs::GoalStatus::ABORTED:
         ROS_DEBUG("[hector_move_base]: received result from controller == ABORTED");
-        setNextState(stuckRecoveryState_);
+        if (currentState_ == exploringState_) {
+            setNextState(stuckExplorationRecoveryState_);
+            return;
+        }
+        if (currentState_ == planningState_) {
+            setNextState(stuckPlanningRecoveryState_);
+            return;
+        }
+        ROS_WARN("[hector_move_base]: controller sent ABORTED. currentState is neither planning nor exploring.");
         return;
 
     case actionlib_msgs::GoalStatus::SUCCEEDED:

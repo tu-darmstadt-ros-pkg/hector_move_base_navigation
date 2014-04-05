@@ -50,7 +50,11 @@ bool HectorNavCoreExplorationPlugin::makePlan(const geometry_msgs::PoseStamped& 
         ROS_DEBUG("[exploration_plugin]: starting getObservationPose. distance = %f; (%f,%f,%f) (%f,%f,%f,%f)", distance, goal.pose.position.x, goal.pose.position.y, goal.pose.position.z, goal.pose.orientation.x, goal.pose.orientation.y, goal.pose.orientation.z, goal.pose.orientation.w);
 
         geometry_msgs::PoseStamped observation_goal;
-        exploration_planner->getObservationPose(goal, distance, observation_goal);
+
+        if (!exploration_planner->getObservationPose(goal, distance, observation_goal)){
+          return false;
+        }
+
         return exploration_planner->makePlan(start, observation_goal, plan);
     }
 }

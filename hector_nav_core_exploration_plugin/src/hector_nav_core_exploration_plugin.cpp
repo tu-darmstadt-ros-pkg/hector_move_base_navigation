@@ -52,6 +52,7 @@ bool HectorNavCoreExplorationPlugin::makePlan(const geometry_msgs::PoseStamped& 
         geometry_msgs::PoseStamped observation_goal;
 
         if (!exploration_planner->getObservationPose(goal, distance, observation_goal)){
+          ROS_ERROR("hector_nav_core_plugin makePlan call failed to find observation pose in makePlan call. Returning false.");
           return false;
         }
 

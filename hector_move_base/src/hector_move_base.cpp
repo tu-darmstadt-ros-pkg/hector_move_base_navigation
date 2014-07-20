@@ -414,7 +414,7 @@ void HectorMoveBase::observationCB(const hector_move_base_msgs::MoveBaseActionGo
     tolerance_srv.request.linearTolerance = observeLinearTolerance_;
     tolerance_srv.request.angularTolerance = observeAngularTolerance_;
     if (tolerance_client_.call(tolerance_srv)) {
-        ROS_INFO("[hector_move_base]: calling tolerance service");
+        ROS_INFO("[hector_move_base]: called tolerance service successfully");
     }
     else {
         ROS_WARN("[hector_move_base]: calling tolerance service FAILED");
@@ -540,11 +540,14 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
 
     case actionlib_msgs::GoalStatus::SUCCEEDED:
         ROS_DEBUG("[hector_move_base]: received result from controller == SUCCEEDED");
+        // if status goal id is equal to global goal we are done.
         if (isGoalIDEqual(getGlobalGoal().goal_id, result->status.goal_id)) {
             ROS_DEBUG("[hector_move_base]: reached global goal");
             successGoal();
             return;
         }
+        // else result id must match current goal id or path id
+        // if we are in exploration mode discard all temporary goals and trigger exploration
         if (getGlobalGoal().do_exploration) {
             while (goals_.size() > 1) {
                 popCurrentGoal();
@@ -554,9 +557,17 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
             ROS_DEBUG("[hector_move_base]: restarting exploration");
             return;
         }
+        // if result id equals current goal but not global goal
+        if (isGoalIDEqual(getCurrentActionPath().goal_id, result->status.goal_id)) {
+            ROS_DEBUG("[hector_move_base]: number of goals: %i", goals_.size());
+            setNextState(planningState_);
+            ROS_DEBUG("[hector_move_base]: start planning, last path was followed to the end");
+            return;
+        }
+        // if result id equals current goal but not global goal
         if ((goals_.size() > 1) && isGoalIDEqual(getCurrentGoal().goal_id, result->status.goal_id)) {
             popCurrentGoal();
-            setNextState(exploringState_);
+            setNextState(planningState_);
             ROS_DEBUG("[hector_move_base]: start planning for next goal");
             return;
         }

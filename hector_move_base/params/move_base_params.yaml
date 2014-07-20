@@ -14,7 +14,7 @@ exploration_replan_time: 5.0
 oscillation_distance: 0.1
 oscillation_timeout: 3.0
 oscillation_count: 2
-horizon_local_planner: 30
+horizon_local_planner: 10
 
 shutdown_costmaps: false
 clearing_radius: 0.4

@@ -577,7 +577,7 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
             return;
         }
         // if result id equals current goal but not global goal
-        hector_move_base_msgs::MoveBaseActionPath current_action_path = getCurrentActionPath().goal_id;
+        hector_move_base_msgs::MoveBaseActionPath current_action_path = getCurrentActionPath();
         if (isGoalIDEqual(current_action_path.goal_id, result->status.goal_id)) {
             ROS_DEBUG("[hector_move_base]: number of goals: %i", goals_.size());
             double diff_x = fabs(current_action_path.goal.target_path.poses.back().pose.position.x - global_goal.target_pose.pose.position.x);

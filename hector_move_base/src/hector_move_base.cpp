@@ -514,11 +514,12 @@ void HectorMoveBase::syscommandCB(const std_msgs::String::ConstPtr& string){
 void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseActionResult::ConstPtr& result){
     ROS_DEBUG("[hector_move_base]: In controller result callback");
 
+    hector_move_base_msgs::MoveBaseActionPath current_action_path = getCurrentActionPath();
     handlerActionGoal global_goal = getGlobalGoal();
 
     if (!((isGoalIDEqual(getCurrentGoal().goal_id, result->status.goal_id)) ||
           (isGoalIDEqual(global_goal.goal_id, result->status.goal_id)) ||
-          isGoalIDEqual(getCurrentActionPath().goal_id, result->status.goal_id))) {
+          isGoalIDEqual(current_action_path.goal_id, result->status.goal_id))) {
         ROS_INFO("[hector_move_base]: goal is outdated, ignoring controller feedback");
         return;
     }
@@ -577,7 +578,6 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
             return;
         }
         // if result id equals current goal but not global goal
-        hector_move_base_msgs::MoveBaseActionPath current_action_path = getCurrentActionPath();
         if (isGoalIDEqual(current_action_path.goal_id, result->status.goal_id)) {
             ROS_DEBUG("[hector_move_base]: number of goals: %i", goals_.size());
             double diff_x = fabs(current_action_path.goal.target_path.poses.back().pose.position.x - global_goal.target_pose.pose.position.x);

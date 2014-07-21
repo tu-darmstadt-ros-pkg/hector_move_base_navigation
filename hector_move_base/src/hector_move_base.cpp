@@ -526,7 +526,7 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
         return;
 
     case actionlib_msgs::GoalStatus::PREEMPTED:
-        ROS_DEBUG("[hector_move_base]: received result from controller == PREEMPTED");
+        ROS_INFO("[hector_move_base]: received result from controller == PREEMPTED");
         if ((currentState_ == stuckExplorationRecoveryState_) ||
                 (nextState_ == stuckExplorationRecoveryState_) ||
                 (currentState_ == stuckPlanningRecoveryState_) ||
@@ -537,12 +537,12 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
         return;
 
     case actionlib_msgs::GoalStatus::REJECTED:
-        ROS_DEBUG("[hector_move_base]: received result from controller == REJECTED");
+        ROS_INFO("[hector_move_base]: received result from controller == REJECTED");
         setNextState(exploringState_);
         return;
 
     case actionlib_msgs::GoalStatus::ABORTED:
-        ROS_DEBUG("[hector_move_base]: received result from controller == ABORTED");
+        ROS_INFO("[hector_move_base]: received result from controller == ABORTED");
         if (currentState_ == exploringState_) {
             setNextState(stuckExplorationRecoveryState_);
             return;
@@ -555,7 +555,7 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
         return;
 
     case actionlib_msgs::GoalStatus::SUCCEEDED:
-        ROS_DEBUG("[hector_move_base]: received result from controller == SUCCEEDED");
+        ROS_INFO("[hector_move_base]: received result from controller == SUCCEEDED");
         // if status goal id is equal to global goal we are done.
         if (isGoalIDEqual(getGlobalGoal().goal_id, result->status.goal_id)) {
             ROS_DEBUG("[hector_move_base]: reached global goal");
@@ -570,21 +570,21 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
             }
             currentState_->abort();
             setNextState(exploringState_);
-            ROS_DEBUG("[hector_move_base]: restarting exploration");
+            ROS_INFO("[hector_move_base]: restarting exploration");
             return;
         }
         // if result id equals current goal but not global goal
         if (isGoalIDEqual(getCurrentActionPath().goal_id, result->status.goal_id)) {
             ROS_DEBUG("[hector_move_base]: number of goals: %i", goals_.size());
             setNextState(planningState_);
-            ROS_DEBUG("[hector_move_base]: start planning, last path was followed to the end");
+            ROS_INFO("[hector_move_base]: start planning, last path was followed to the end");
             return;
         }
         // if result id equals current goal but not global goal
         if ((goals_.size() > 1) && isGoalIDEqual(getCurrentGoal().goal_id, result->status.goal_id)) {
             popCurrentGoal();
             setNextState(planningState_);
-            ROS_DEBUG("[hector_move_base]: start planning for next goal");
+            ROS_INFO("[hector_move_base]: start planning for next goal");
             return;
         }
         ROS_WARN("[hector_move_base]: result goal_id does not match global goal or current goal, nor action path id.");

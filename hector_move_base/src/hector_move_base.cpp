@@ -587,7 +587,7 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
             ROS_DEBUG("[hector_move_base]: start planning for next goal");
             return;
         }
-        ROS_WARN("[hector_move_base]: result goal_id does not match global goal or current goal.");
+        ROS_WARN("[hector_move_base]: result goal_id does not match global goal or current goal, nor action path id.");
         return;
 
     default:

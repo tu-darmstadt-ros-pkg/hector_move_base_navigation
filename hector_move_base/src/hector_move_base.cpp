@@ -516,7 +516,7 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
     if (!((isGoalIDEqual(getCurrentGoal().goal_id, result->status.goal_id)) ||
           (isGoalIDEqual(getGlobalGoal().goal_id, result->status.goal_id)) ||
           isGoalIDEqual(getCurrentActionPath().goal_id, result->status.goal_id))) {
-        ROS_DEBUG("[hector_move_base]: goal is outdated, ignoring controller feedback");
+        ROS_INFO("[hector_move_base]: goal is outdated, ignoring controller feedback");
         return;
     }
 
@@ -547,7 +547,7 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
             setNextState(stuckExplorationRecoveryState_);
             return;
         }
-        if (currentState_ == planningState_) {
+        if ((currentState_ == planningState_) || currentState_ == refinePlanState_) {
             setNextState(stuckPlanningRecoveryState_);
             return;
         }

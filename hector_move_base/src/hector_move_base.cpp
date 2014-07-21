@@ -13,6 +13,7 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     ros::NodeHandle nh;
 
     private_nh_.param("circumscribed_radius", circumscribedRadius_, 0.3);
+    private_nh_.param("goal_reached_radius", goalReachedRadius_, 0.3);
     private_nh_.param("time_to_trigger_replanning", timeToTriggerReplannning_, 2.0);
     private_nh_.param("time_to_trigger_exploration", timeToTriggerExploration_, 4.0);
     private_nh_.param("goal_reached_angular_variance", goalReachchedAngularVariance_, M_PI_4);
@@ -513,8 +514,10 @@ void HectorMoveBase::syscommandCB(const std_msgs::String::ConstPtr& string){
 void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseActionResult::ConstPtr& result){
     ROS_DEBUG("[hector_move_base]: In controller result callback");
 
+    handlerActionGoal global_goal = getGlobalGoal();
+
     if (!((isGoalIDEqual(getCurrentGoal().goal_id, result->status.goal_id)) ||
-          (isGoalIDEqual(getGlobalGoal().goal_id, result->status.goal_id)) ||
+          (isGoalIDEqual(global_goal.goal_id, result->status.goal_id)) ||
           isGoalIDEqual(getCurrentActionPath().goal_id, result->status.goal_id))) {
         ROS_INFO("[hector_move_base]: goal is outdated, ignoring controller feedback");
         return;
@@ -557,14 +560,14 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
     case actionlib_msgs::GoalStatus::SUCCEEDED:
         ROS_INFO("[hector_move_base]: received result from controller == SUCCEEDED");
         // if status goal id is equal to global goal we are done.
-        if (isGoalIDEqual(getGlobalGoal().goal_id, result->status.goal_id)) {
+        if (isGoalIDEqual(global_goal.goal_id, result->status.goal_id)) {
             ROS_DEBUG("[hector_move_base]: reached global goal");
             successGoal();
             return;
         }
         // else result id must match current goal id or path id
         // if we are in exploration mode discard all temporary goals and trigger exploration
-        if (getGlobalGoal().do_exploration) {
+        if (global_goal.do_exploration) {
             while (goals_.size() > 1) {
                 popCurrentGoal();
             }
@@ -574,8 +577,16 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
             return;
         }
         // if result id equals current goal but not global goal
-        if (isGoalIDEqual(getCurrentActionPath().goal_id, result->status.goal_id)) {
+        hector_move_base_msgs::MoveBaseActionPath current_action_path = getCurrentActionPath().goal_id;
+        if (isGoalIDEqual(current_action_path.goal_id, result->status.goal_id)) {
             ROS_DEBUG("[hector_move_base]: number of goals: %i", goals_.size());
+            double diff_x = fabs(current_action_path.goal.target_path.poses.back().pose.position.x - global_goal.target_pose.pose.position.x);
+            double diff_y = fabs(current_action_path.goal.target_path.poses.back().pose.position.y - global_goal.target_pose.pose.position.y);
+            if ((pow(diff_x, 2) + pow(diff_y, 2)) < goalReachedRadius_) {
+                ROS_INFO("[hector_move_base]: path was followed to the end. path goal is close enough to global_goal");
+                successGoal();
+                return;
+            }
             setNextState(planningState_);
             ROS_INFO("[hector_move_base]: start planning, last path was followed to the end");
             return;

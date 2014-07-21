@@ -89,9 +89,9 @@ public:
                 ROS_DEBUG("[refine_plan_handler]: trajectory generated successfully");
                 hector_move_base_msgs::MoveBaseActionPath new_path = hector_move_base_msgs::MoveBaseActionPath();
                 new_path.goal_id = current_path.goal_id;
-//                std::stringstream goal_id_stream;
-//                goal_id_stream << current_path.goal_id.id << "_sbpl";
-//                new_path.goal_id.id = goal_id_stream.str();
+                std::stringstream goal_id_stream;
+                goal_id_stream << current_path.goal_id.id << "_sbpl";
+                new_path.goal_id.id = goal_id_stream.str();
                 new_path.header.frame_id = current_path.header.frame_id;
                 new_path.header.stamp = current_path.goal.target_path.header.stamp;
                 new_path.goal.speed = current_path.goal.speed;

@@ -55,7 +55,7 @@ private:
     boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> stuckExplorationRecoveryState_, stuckPlanningRecoveryState_;
     boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> currentState_, nextState_, startState_;
 
-    double circumscribedRadius_, timeToTriggerReplannning_, timeToTriggerExploration_, goalReachchedAngularVariance_, goalReachedSquaredLinearVariance_, observeLinearTolerance_, observeAngularTolerance_;
+    double circumscribedRadius_, goalReachedRadius_, timeToTriggerReplannning_, timeToTriggerExploration_, goalReachchedAngularVariance_, goalReachedSquaredLinearVariance_, observeLinearTolerance_, observeAngularTolerance_;
     std::string controller_namespace_;
     bool use_alternate_planner_;
     std::vector<handlerActionGoal> goals_;

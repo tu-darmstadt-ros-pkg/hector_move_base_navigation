@@ -18,7 +18,7 @@ public:
         ROS_DEBUG("[publish_success_handler]: starting publish success");
         hector_move_base_msgs::MoveBaseActionResult action_result;
         action_result.header.stamp = ros::Time::now();
-        action_result.status.goal_id = hectorMoveBaseInterface->getCurrentGoal().goal_id;
+        action_result.status.goal_id = hectorMoveBaseInterface->getGlobalGoal().goal_id;
         action_result.status.status = actionlib_msgs::GoalStatus::SUCCEEDED;
         result_pub_.publish(action_result);
         return hector_move_base::NEXT;

@@ -1,7 +1,7 @@
 hector_exploration_planner:
   security_constant: 0.5
   min_obstacle_dist: 10
-  plan_in_unknown: false
+  plan_in_unknown: true
   use_inflated_obstacle: true
   goal_angle_penalty: 100
   min_frontier_size: 5

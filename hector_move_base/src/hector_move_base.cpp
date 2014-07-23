@@ -13,7 +13,7 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     ros::NodeHandle nh;
 
     private_nh_.param("circumscribed_radius", circumscribedRadius_, 0.3);
-    private_nh_.param("goal_reached_radius", goalReachedRadius_, 0.3);
+    private_nh_.param("goal_reached_radius", goalReachedRadius_, 0.2);
     private_nh_.param("time_to_trigger_replanning", timeToTriggerReplannning_, 2.0);
     private_nh_.param("time_to_trigger_exploration", timeToTriggerExploration_, 4.0);
     private_nh_.param("goal_reached_angular_variance", goalReachchedAngularVariance_, M_PI_4);
@@ -582,7 +582,7 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
             ROS_DEBUG("[hector_move_base]: number of goals: %i", goals_.size());
             double diff_x = fabs(current_action_path.goal.target_path.poses.back().pose.position.x - global_goal.target_pose.pose.position.x);
             double diff_y = fabs(current_action_path.goal.target_path.poses.back().pose.position.y - global_goal.target_pose.pose.position.y);
-            if ((pow(diff_x, 2) + pow(diff_y, 2)) < goalReachedRadius_) {
+            if ((pow(diff_x, 2) + pow(diff_y, 2)) < pow(goalReachedRadius_, 2)) {
                 ROS_INFO("[hector_move_base]: path was followed to the end. path goal is close enough to global_goal");
                 successGoal();
                 return;

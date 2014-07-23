@@ -13,6 +13,10 @@ private:
     pluginlib::ClassLoader<hector_nav_core::ExplorationPlanner> expl_loader_;
     boost::shared_ptr<hector_nav_core::ExplorationPlanner> exploration_planner_;
 
+    bool isGoalIDEqual(const actionlib_msgs::GoalID& firstGoalID, const actionlib_msgs::GoalID& secondGoalID) {
+        return ((firstGoalID.stamp == secondGoalID.stamp) && (firstGoalID.id == secondGoalID.id));
+    }
+
 public:
     HectorPlanningHandler(hector_move_base::IHectorMoveBase* interface) : HectorMoveBaseHandler(interface)
       , expl_loader_("hector_nav_core", "hector_nav_core::ExplorationPlanner")
@@ -95,6 +99,13 @@ public:
         new_path.goal.target_path.poses = plan;
         hectorMoveBaseInterface->setActionPath(new_path);
         ROS_DEBUG("[planning_handler]: NEXT plan generated, continue");
+
+        if (isGoalIDEqual(current_goal.goal_id, hectorMoveBaseInterface->getCurrentGoal().goal_id)) {
+            hectorMoveBaseInterface->popCurrentGoal();
+            current_goal.target_pose.pose = plan.back().pose;
+            hectorMoveBaseInterface->pushCurrentGoal(current_goal);
+        }
+
         return hector_move_base::NEXT;
     }
 

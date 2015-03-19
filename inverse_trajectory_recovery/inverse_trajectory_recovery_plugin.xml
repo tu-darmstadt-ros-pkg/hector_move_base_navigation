@@ -1,0 +1,7 @@
+<library path="lib/libinverse_trajectory_recovery">
+  <class name="inverse_trajectory_recovery/InverseTrajectoryRecovery" type="inverse_trajectory_recovery::InverseTrajectoryRecovery" base_class_type="nav_core::RecoveryBehavior">
+    <description>
+      A recovery behavior that tries to travel back along the path that lead to the stuck situation
+    </description>
+  </class>
+</library>

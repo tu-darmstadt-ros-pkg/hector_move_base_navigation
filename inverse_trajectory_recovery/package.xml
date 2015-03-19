@@ -1,0 +1,55 @@
+<package>
+  <name>inverse_trajectory_recovery</name>
+  <version>0.1.0</version>
+  <description>inverse_trajectory_recovery</description>
+  <maintainer email="kohlbrecher@sim.tu-darmstadt.de">Stefan Kohlbrecher</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://ros.org/wiki/inverse_trajectory_recovery</url>
+  <!-- <url type="bugtracker"></url> -->
+
+  <author email="kohlbrecher@sim.tu-darmstadt.de">Stefan Kohlbrecher</author>
+
+  <!-- Dependencies which this package needs to build itself. -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Dependencies needed to compile this package. -->
+  <build_depend>roscpp</build_depend>
+  <build_depend>nav_core</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>costmap_2d</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>base_local_planner</build_depend>
+  <build_depend>pluginlib</build_depend>
+  <build_depend>hector_nav_msgs</build_depend>
+  <build_depend>hector_move_base_msgs</build_depend>
+
+  <!-- Dependencies needed after this package is compiled. -->
+  <run_depend>roscpp</run_depend>
+  <run_depend>nav_core</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>costmap_2d</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>base_local_planner</run_depend>
+  <run_depend>pluginlib</run_depend>
+  <run_depend>hector_nav_msgs</run_depend>
+  <run_depend>hector_move_base_msgs</run_depend>
+
+  <!-- Dependencies needed only for running tests. -->
+  <!-- <test_depend>roscpp</test_depend> -->
+  <!-- <test_depend>nav_core</test_depend> -->
+  <!-- <test_depend>tf</test_depend> -->
+  <!-- <test_depend>costmap_2d</test_depend> -->
+  <!-- <test_depend>geometry_msgs</test_depend> -->
+  <!-- <test_depend>base_local_planner</test_depend> -->
+  <!-- <test_depend>pluginlib</test_depend> -->
+  <!-- <test_depend>hector_nav_msgs</test_depend> -->
+  <!-- <test_depend>hector_move_base_msgs</test_depend> -->
+
+<export>
+    <cpp lflags="-Wl,-rpath,${prefix}/lib -L${prefix}/lib -linverse_trajectory_recovery" cflags="-I${prefix}/include"/>
+    <nav_core plugin="${prefix}/inverse_trajectory_recovery_plugin.xml"/>
+</export>
+
+</package>

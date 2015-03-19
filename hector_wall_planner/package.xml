@@ -1,0 +1,51 @@
+<package>
+  <name>hector_wall_planner</name>
+  <version>0.1.0</version>
+  <description>hector_wall_planner</description>
+  <maintainer email="">Flo</maintainer>
+
+  <license>BSD</license>
+
+  <url type="website">http://ros.org/wiki/hector_wall_planner</url>
+  <!-- <url type="bugtracker"></url> -->
+
+  <author>Flo</author>
+
+  <!-- Dependencies which this package needs to build itself. -->
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <!-- Dependencies needed to compile this package. -->
+  <build_depend>roscpp</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>costmap_2d</build_depend>
+  <build_depend>nav_core</build_depend>
+  <build_depend>pluginlib</build_depend>
+  <build_depend>nav_msgs</build_depend>
+  <build_depend>rosconsole</build_depend>
+  <build_depend>hector_nav_msgs</build_depend>
+
+  <!-- Dependencies needed after this package is compiled. -->
+  <run_depend>roscpp</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>costmap_2d</run_depend>
+  <run_depend>nav_core</run_depend>
+  <run_depend>pluginlib</run_depend>
+  <run_depend>nav_msgs</run_depend>
+  <run_depend>rosconsole</run_depend>
+  <run_depend>hector_nav_msgs</run_depend>
+
+  <!-- Dependencies needed only for running tests. -->
+  <!-- <test_depend>roscpp</test_depend> -->
+  <!-- <test_depend>geometry_msgs</test_depend> -->
+  <!-- <test_depend>costmap_2d</test_depend> -->
+  <!-- <test_depend>nav_core</test_depend> -->
+  <!-- <test_depend>pluginlib</test_depend> -->
+  <!-- <test_depend>nav_msgs</test_depend> -->
+  <!-- <test_depend>rosconsole</test_depend> -->
+  <!-- <test_depend>hector_nav_msgs</test_depend> -->
+
+<export>
+    <nav_core plugin="${prefix}/hector_wall_planner_plugin.xml"/>
+</export>
+
+</package>

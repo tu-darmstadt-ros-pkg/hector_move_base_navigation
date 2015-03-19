@@ -26,6 +26,13 @@ find_package(Boost REQUIRED COMPONENTS system)
 # CATKIN_MIGRATION: removed during catkin migration
 # rosbuild_init()
 
+catkin_package(
+    DEPENDS actionlib_msgs monstertruck_msgs move_base_msgs nav_core hector_move_base_msgs hector_nav_core hector_nav_msgs_tools std_msgs hector_exploration_planner inverse_trajectory_recovery hector_nav_core_exploration_plugin sbpl_lattice_planner
+    CATKIN_DEPENDS # TODO
+    INCLUDE_DIRS include
+    LIBRARIES # TODO
+)
+
 
 # CATKIN_MIGRATION: removed during catkin migration
 # rosbuild_add_boost_directories()
@@ -43,9 +50,3 @@ target_link_libraries(hector_move_base ${Boost_LIBRARIES} ${catkin_LIBRARIES})
 
 # catkin_package parameters: http://ros.org/doc/groovy/api/catkin/html/dev_guide/generated_cmake_api.html#catkin-package
 # TODO: fill in what other packages will need to use this package
-catkin_package(
-    DEPENDS actionlib_msgs monstertruck_msgs move_base_msgs nav_core hector_move_base_msgs hector_nav_core hector_nav_msgs_tools std_msgs hector_exploration_planner inverse_trajectory_recovery hector_nav_core_exploration_plugin sbpl_lattice_planner
-    CATKIN_DEPENDS # TODO
-    INCLUDE_DIRS include
-    LIBRARIES # TODO
-)

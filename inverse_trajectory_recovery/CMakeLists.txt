@@ -35,6 +35,7 @@ include_directories(${catkin_INCLUDE_DIRS} include)
 
 #common commands for building c++ executables and libraries
 add_library(inverse_trajectory_recovery src/inverse_trajectory_recovery.cpp)
+add_dependencies(inverse_trajectory_recovery hector_move_base_msgs_generate_messages_cpp)
 
 ## Generate added messages and services with any dependencies listed here
 #generate_messages(

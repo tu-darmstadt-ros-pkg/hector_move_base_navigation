@@ -6,8 +6,10 @@
 
   <node pkg="hector_move_base" type="hector_move_base" respawn="false" name="move_base" output="screen" >
 
-    <param name="SBPLLatticePlanner/primitive_filename" value="$(find hector_move_base)/mprim/crab_higher_cost_only_back.mprim" />
-    
+    <!--<param name="SBPLLatticePlanner/primitive_filename" value="$(find hector_move_base)/mprim/crab_higher_cost_only_back.mprim" />-->
+	
+    <param name="SBPLLatticePlanner/primitive_filename" value="$(find hector_move_base)/mprim/test.out" />    
+
     <param name="use_alternate_planner" value="$(arg use_alternate_planner)" />
     
     <rosparam file="$(find hector_move_base)/params/hector_move_base_params.yaml" command="load" />

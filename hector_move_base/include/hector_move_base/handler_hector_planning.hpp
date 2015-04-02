@@ -22,6 +22,7 @@ private:
     // Always plan with SBPL Planner.
     pluginlib::ClassLoader<nav_core::BaseGlobalPlanner> bgp_loader_;
     boost::shared_ptr<nav_core::BaseGlobalPlanner> trajectory_planner_;
+    bool sbpl_only;
     // ------------------------------------------------------------------------------------
 
 public:
@@ -31,6 +32,8 @@ public:
     {
         costmap_ = interface->getCostmap();
         ros::NodeHandle private_nh("~");
+
+        private_nh.param("sbpl_only", sbpl_only, true);
 
         std::string exploration_planner_name = "hector_nav_core_exploration_plugin/HectorNavCoreExplorationPlugin";
         private_nh.param("exploration_planner", exploration_planner_name, exploration_planner_name);
@@ -118,9 +121,7 @@ public:
         geometry_msgs::PoseStamped start;
         tf::poseStampedTFToMsg(global_pose, start);
 
-        bool only_sbpl = true;
-
-        if(only_sbpl)
+        if(sbpl_only)
         {
             // ------------------------------------------------------------------------------------
             // Contribution by Paul Manns, feature for ARGOS Challenge only.

@@ -1,5 +1,7 @@
 % --------------------------------------------------------------------------------
-% This script generates SBPL movement primitives for the ARGONAUTS robot
+% April 2015, Paul Manns
+% This is a modification of by Maxim Likhachev's SBPL default script.
+% It generates SBPL movement primitives for the ARGONAUTS robot
 % which only consist of in-place-rotations and forward and reverse 
 % movements.
 % --------------------------------------------------------------------------------

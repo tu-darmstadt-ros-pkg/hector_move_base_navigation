@@ -13,9 +13,17 @@ private:
     pluginlib::ClassLoader<hector_nav_core::ExplorationPlanner> expl_loader_;
     boost::shared_ptr<hector_nav_core::ExplorationPlanner> exploration_planner_;
 
+    // ------------------------------------------------------------------------------------
+    // Contribution by Paul Manns, feature for ARGOS Challenge only.
+    // Always plan with SBPL Planner.
+    pluginlib::ClassLoader<nav_core::BaseGlobalPlanner> bgp_loader_;
+    boost::shared_ptr<nav_core::BaseGlobalPlanner> trajectory_planner_;
+    // ------------------------------------------------------------------------------------
+
 public:
     HectorExplorationHandler(hector_move_base::IHectorMoveBase* interface) : HectorMoveBaseHandler(interface)
       , expl_loader_("hector_nav_core", "hector_nav_core::ExplorationPlanner")
+      , bgp_loader_("nav_core", "nav_core::BaseGlobalPlanner")
     {
         costmap_ = interface->getCostmap();
         ros::NodeHandle private_nh("~");
@@ -46,6 +54,39 @@ public:
             ROS_FATAL("Failed to create the %s planner, are you sure it is properly registered and that the containing library is built? Exception: %s", exploration_planner_name.c_str(), ex.what());
             exit(0);
         }
+
+        // ------------------------------------------------------------------------------------
+        // Contribution by Paul Manns, feature for ARGOS Challenge only.
+        // Always plan with SBPL Planner.
+        std::string path_planner = "SBPLLatticePlanner";
+        private_nh.param("path_planner", path_planner, path_planner);
+
+        try {
+            //check if a non fully qualified name has potentially been passed in
+            if(!bgp_loader_.isClassAvailable(path_planner)){
+                std::vector<std::string> classes = bgp_loader_.getDeclaredClasses();
+                for(unsigned int i = 0; i < classes.size(); ++i){
+                    if(path_planner == bgp_loader_.getName(classes[i])){
+                        //if we've found a match... we'll get the fully qualified name and break out of the loop
+                        ROS_WARN("Planner specifications should now include the package name. You are using a deprecated API. Please switch from %s to %s in your yaml file.",
+                                 path_planner.c_str(), classes[i].c_str());
+                        path_planner = classes[i];
+                        break;
+                    }
+                }
+            }
+            trajectory_planner_ = bgp_loader_.createInstance(path_planner);
+            trajectory_planner_->initialize(bgp_loader_.getName(path_planner), costmap_);
+        }
+        catch (const pluginlib::PluginlibException& ex) {
+            ROS_FATAL("Failed to create the %s planner, are you sure it is properly registered and that the containing library is built? Exception: %s", path_planner.c_str(), ex.what());
+            exit(0);
+        }
+        // ------------------------------------------------------------------------------------
+
+
+        ROS_DEBUG("[refine_plan_handler]: constructed successfully");
+
     }
 
     hector_move_base::RESULT handle() {
@@ -130,6 +171,22 @@ public:
         ROS_WARN("[exploration_handler]: execution of hector_global_planner failed");
         return false;
       }
+
+      // ------------------------------------------------------------------------------------
+      // Contribution by Paul Manns, feature for ARGOS Challenge only.
+      // Always plan with SBPL Planner.
+      geometry_msgs::PoseStamped goalForTrajectory = plan.back();
+
+      std::vector<geometry_msgs::PoseStamped> trajectory;
+      if(!(trajectory_planner_->makePlan(start, goalForTrajectory, trajectory)))
+      {
+          ROS_WARN("[planning_handler]: execution of hector planner failed for goal (%.2f, %.2f)",
+                   goalForTrajectory.pose.position.x, goalForTrajectory.pose.position.y);
+          return false;
+      }
+      plan = trajectory;
+      // ------------------------------------------------------------------------------------
+
 
       ROS_DEBUG("[exploration_handler]: Generated a plan from the base_global_planner");
       return true;

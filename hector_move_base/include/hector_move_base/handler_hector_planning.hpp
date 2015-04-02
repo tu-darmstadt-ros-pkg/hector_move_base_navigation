@@ -17,9 +17,17 @@ private:
         return ((firstGoalID.stamp == secondGoalID.stamp) && (firstGoalID.id == secondGoalID.id));
     }
 
+    // ------------------------------------------------------------------------------------
+    // Contribution by Paul Manns, feature for ARGOS Challenge only.
+    // Always plan with SBPL Planner.
+    pluginlib::ClassLoader<nav_core::BaseGlobalPlanner> bgp_loader_;
+    boost::shared_ptr<nav_core::BaseGlobalPlanner> trajectory_planner_;
+    // ------------------------------------------------------------------------------------
+
 public:
     HectorPlanningHandler(hector_move_base::IHectorMoveBase* interface) : HectorMoveBaseHandler(interface)
       , expl_loader_("hector_nav_core", "hector_nav_core::ExplorationPlanner")
+      , bgp_loader_("nav_core", "nav_core::BaseGlobalPlanner")
     {
         costmap_ = interface->getCostmap();
         ros::NodeHandle private_nh("~");
@@ -50,6 +58,37 @@ public:
             ROS_FATAL("Failed to create the %s planner, are you sure it is properly registered and that the containing library is built? Exception: %s", exploration_planner_name.c_str(), ex.what());
             exit(0);
         }
+
+        // ------------------------------------------------------------------------------------
+        // Contribution by Paul Manns, feature for ARGOS Challenge only.
+        // Always plan with SBPL Planner.
+        std::string path_planner = "SBPLLatticePlanner";
+        private_nh.param("path_planner", path_planner, path_planner);
+
+        try
+        {
+            //check if a non fully qualified name has potentially been passed in
+            if(!bgp_loader_.isClassAvailable(path_planner)){
+                std::vector<std::string> classes = bgp_loader_.getDeclaredClasses();
+                for(unsigned int i = 0; i < classes.size(); ++i){
+                    if(path_planner == bgp_loader_.getName(classes[i])){
+                        //if we've found a match... we'll get the fully qualified name and break out of the loop
+                        ROS_WARN("Planner specifications should now include the package name. You are using a deprecated API. Please switch from %s to %s in your yaml file.",
+                                 path_planner.c_str(), classes[i].c_str());
+                        path_planner = classes[i];
+                        break;
+                    }
+                }
+            }
+            trajectory_planner_ = bgp_loader_.createInstance(path_planner);
+            trajectory_planner_->initialize(bgp_loader_.getName(path_planner), costmap_);
+        }
+        catch (const pluginlib::PluginlibException& ex)
+        {
+            ROS_FATAL("Failed to create the %s planner, are you sure it is properly registered and that the containing library is built? Exception: %s", path_planner.c_str(), ex.what());
+            exit(0);
+        }
+        // ------------------------------------------------------------------------------------
     }
 
     hector_move_base::RESULT handle() {
@@ -79,15 +118,44 @@ public:
         geometry_msgs::PoseStamped start;
         tf::poseStampedTFToMsg(global_pose, start);
 
-        //if the planner fails or returns a zero length plan, planning failed
-        if((!exploration_planner_->makePlan(start, current_goal.target_pose, plan, current_goal.distance)) || plan.empty()){
-            ROS_INFO("[planning_handler]: execution of hector planner failed for goal (%.2f, %.2f)", current_goal.target_pose.pose.position.x, current_goal.target_pose.pose.position.y);
-            if (hectorMoveBaseInterface->getGlobalGoal().do_exploration) {
-                ROS_INFO("[planning_handler]: In Exploration. Looking for new frontier.");
-                return hector_move_base::ALTERNATIVE;
+        bool only_sbpl = true;
+
+        if(only_sbpl)
+        {
+            // ------------------------------------------------------------------------------------
+            // Contribution by Paul Manns, feature for ARGOS Challenge only.
+            // Always plan with SBPL Planner.
+            geometry_msgs::PoseStamped goalForTrajectory = current_goal.target_pose;
+
+            std::vector<geometry_msgs::PoseStamped> trajectory;
+            if(!(trajectory_planner_->makePlan(start, goalForTrajectory, trajectory)))
+            {
+                ROS_WARN("[planning_handler]: execution of hector planner failed for goal (%.2f, %.2f)",
+                         goalForTrajectory.pose.position.x, goalForTrajectory.pose.position.y);
+                if (hectorMoveBaseInterface->getGlobalGoal().do_exploration)
+                {
+                    ROS_INFO("[planning_handler]: In Exploration. Looking for new frontier.");
+                    return hector_move_base::ALTERNATIVE;
+                }
+                return hector_move_base::FAIL;
+            }
+            plan = trajectory;
+            // ------------------------------------------------------------------------------------
         }
-            return hector_move_base::FAIL;
+        else
+        {
+            //if the planner fails or returns a zero length plan, planning failed
+            if((!exploration_planner_->makePlan(start, current_goal.target_pose, plan, current_goal.distance)) || plan.empty()){
+                ROS_INFO("[planning_handler]: execution of hector planner failed for goal (%.2f, %.2f)", current_goal.target_pose.pose.position.x, current_goal.target_pose.pose.position.y);
+                if (hectorMoveBaseInterface->getGlobalGoal().do_exploration)
+                {
+                    ROS_INFO("[planning_handler]: In Exploration. Looking for new frontier.");
+                    return hector_move_base::ALTERNATIVE;
+                }
+                return hector_move_base::FAIL;
+            }
         }
+
 
         hector_move_base_msgs::MoveBaseActionPath new_path = hector_move_base_msgs::MoveBaseActionPath();
         new_path.goal_id = current_goal.goal_id;

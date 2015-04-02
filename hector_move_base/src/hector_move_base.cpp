@@ -8,7 +8,8 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     statemachine_(new HectorMoveBaseStateMachine),
     tf_(tf),
     main_loop_thread_(NULL),
-    move_base_plugin_loader_("nav_core", "nav_core::RecoveryBehavior"){
+    move_base_plugin_loader_("nav_core", "nav_core::RecoveryBehavior")
+{
 
     ros::NodeHandle nh;
 
@@ -148,8 +149,8 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     //    main_loop_thread_ = new boost::thread(boost::bind(&HectorMoveBase::moveBaseLoop, this, nh, controllerFrequency));
 }
 
-HectorMoveBase::~HectorMoveBase(){
-
+HectorMoveBase::~HectorMoveBase()
+{
     if(costmap_ != NULL)
         delete costmap_;
 

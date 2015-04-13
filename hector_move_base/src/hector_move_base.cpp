@@ -11,7 +11,7 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     move_base_plugin_loader_("nav_core", "nav_core::RecoveryBehavior")
 {
 
-    ros::NodeHandle nh;
+    ros::NodeHandle nh;        
 
     private_nh_.param("circumscribed_radius", circumscribedRadius_, 0.3);
     private_nh_.param("goal_reached_radius", goalReachedRadius_, 0.2);
@@ -25,8 +25,41 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     private_nh_.param("use_alternate_planner", use_alternate_planner_, true);
     private_nh_.param("observe_linear_tolerance", observeLinearTolerance_, 0.2);
     private_nh_.param("observe_angular_tolerance", observeAngularTolerance_, M_PI_2);
+    private_nh_.param("use_exploring", use_exploring_, true);
+
+    XmlRpc::XmlRpcValue footprint_as_list;
+    if(private_nh_.getParam("footprint", footprint_as_list))
+    {
+        if(footprint_as_list.getType() == XmlRpc::XmlRpcValue::TypeArray)
+        {
+            for(int i = 0; i < footprint_as_list.size(); ++i)
+            {
+                if(footprint_as_list[i].getType() == XmlRpc::XmlRpcValue::TypeArray
+                && footprint_as_list[i].size() == 2
+                && footprint_as_list[i][0].getType() == XmlRpc::XmlRpcValue::TypeDouble
+                && footprint_as_list[i][1].getType  () == XmlRpc::XmlRpcValue::TypeDouble)
+                {
+                    geometry_msgs::Point32 pt;
+                    pt.x = static_cast<double>(footprint_as_list[i][0]);
+                    pt.y = static_cast<double>(footprint_as_list[i][1]);
+                    footprint_.points.push_back(pt);
+                }
+                else
+                {
+                    ROS_WARN("Invalid footprint element passed into rosparam footprint");
+                }
+            }
+        }
+        else
+        {
+            ROS_WARN("Invalid footprint element passed into rosparam footprint");
+        }
+    }
 
     costmap_ = new costmap_2d::Costmap2DROS("global_costmap", tf_);
+    footprint_pub_ = private_nh_.advertise<geometry_msgs::Polygon>("global_costmap/footprint", 0);
+    footprint_pub_.publish(footprint_);
+
     ROS_DEBUG("[hector_move_base]: costmap loaded");
 
     exploringState_.reset(new hector_move_base_handler::HectorExplorationHandler(this));
@@ -45,6 +78,8 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     idleState_.reset(new hector_move_base_handler::HectorIdleHandler(this));
 
     ROS_DEBUG("[hector_move_base]: all states created");
+
+    ROS_INFO("created costmap");
 
     std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForExploration;
     mappingForExploration.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, planningState_));
@@ -79,7 +114,10 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     statemachine_->addHandlerMapping(publishPathState_, mappingForPublishPath);
 
     std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPublishFeedback;
-    mappingForPublishFeedback.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, waitForReplanningState_));
+    if(use_exploring_)
+        mappingForPublishFeedback.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, waitForReplanningState_));
+    else
+        mappingForPublishFeedback.insert(std::make_pair(NEXT, planningState_));
     statemachine_->addHandlerMapping(publishFeedbackState_, mappingForPublishFeedback);
 
     std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForWaitForReplanning;

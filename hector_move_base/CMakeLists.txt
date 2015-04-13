@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(hector_move_base)
 # Load catkin and all dependencies required for this package
 # TODO: remove all from COMPONENTS that are not catkin packages.
-find_package(catkin REQUIRED COMPONENTS actionlib_msgs monstertruck_msgs move_base_msgs nav_core hector_move_base_msgs hector_nav_core hector_nav_msgs_tools std_msgs hector_exploration_planner inverse_trajectory_recovery hector_nav_core_exploration_plugin sbpl_lattice_planner)
+find_package(catkin REQUIRED COMPONENTS actionlib_msgs monstertruck_msgs move_base_msgs sensor_msgs nav_core hector_move_base_msgs hector_nav_core hector_nav_msgs_tools std_msgs hector_exploration_planner inverse_trajectory_recovery hector_nav_core_exploration_plugin sbpl_lattice_planner)
 
 find_package(Boost REQUIRED COMPONENTS system)
 
@@ -27,7 +27,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 # rosbuild_init()
 
 catkin_package(
-    DEPENDS actionlib_msgs monstertruck_msgs move_base_msgs nav_core hector_move_base_msgs hector_nav_core hector_nav_msgs_tools std_msgs hector_exploration_planner inverse_trajectory_recovery hector_nav_core_exploration_plugin sbpl_lattice_planner
+    DEPENDS actionlib_msgs monstertruck_msgs move_base_msgs sensor_msgs nav_core hector_move_base_msgs hector_nav_core hector_nav_msgs_tools std_msgs hector_exploration_planner inverse_trajectory_recovery hector_nav_core_exploration_plugin sbpl_lattice_planner
     CATKIN_DEPENDS # TODO
     INCLUDE_DIRS include
     LIBRARIES # TODO

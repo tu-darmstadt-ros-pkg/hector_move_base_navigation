@@ -27,6 +27,7 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     private_nh_.param("observe_angular_tolerance", observeAngularTolerance_, M_PI_2);
     private_nh_.param("use_exploring", use_exploring_, true);
 
+    // Generate and publish initial footprint
     XmlRpc::XmlRpcValue footprint_as_list;
     if(private_nh_.getParam("footprint", footprint_as_list))
     {
@@ -55,6 +56,8 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
             ROS_WARN("Invalid footprint element passed into rosparam footprint");
         }
     }
+
+    // jointStates_sub_ = nh.subscribe<sensor_msgs::JointState>("joint_states", 1, boost::bind(&HectorMoveBase::jointStatesCB, this, _1));
 
     costmap_ = new costmap_2d::Costmap2DROS("global_costmap", tf_);
     footprint_pub_ = private_nh_.advertise<geometry_msgs::Polygon>("global_costmap/footprint", 0);
@@ -502,6 +505,11 @@ void HectorMoveBase::observationCB(const hector_move_base_msgs::MoveBaseActionGo
     pushCurrentGoal(newGoal);
     setNextState(planningState_);
     return;
+}
+
+void HectorMoveBase::jointStatesCB(const sensor_msgs::JointState & state)
+{
+
 }
 
 void HectorMoveBase::simple_goalCB(const geometry_msgs::PoseStamped::ConstPtr& simpleGoal){

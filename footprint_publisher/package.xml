@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package>
+  <name>footprint_publisher</name>
+  <version>0.0.0</version>
+  <description>The footprint_publisher package</description>
+
+  <maintainer email="kohlbrecher@sim.informatik.tu-darmstadt.de">SK</maintainer>
+  <maintainer email="manns@sim.informatik.tu-darmstadt.de">PM</maintainer>
+
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>rospy</run_depend>
+
+
+  <export>
+  </export>
+</package>

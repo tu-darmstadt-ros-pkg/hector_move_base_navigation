@@ -98,7 +98,8 @@ public:
         hector_move_base::handlerActionGoal current_goal = hectorMoveBaseInterface->getGlobalGoal();
         if (current_goal.do_exploration){
             std::vector<geometry_msgs::PoseStamped> plan;
-            if (!getExplorationGoal(current_goal.target_pose, plan)) {
+            if (!getExplorationGoal(current_goal.target_pose, plan))
+            {
                 ROS_ERROR("[exploration_planner]: FAIL, exploration_planner could not find a frontier.");
                 return hector_move_base::FAIL;
             }

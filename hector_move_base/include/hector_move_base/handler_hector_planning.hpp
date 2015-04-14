@@ -131,7 +131,7 @@ public:
             std::vector<geometry_msgs::PoseStamped> trajectory;
             if(!(trajectory_planner_->makePlan(start, goalForTrajectory, trajectory)))
             {
-                ROS_WARN("[planning_handler]: execution of hector planner failed for goal (%.2f, %.2f)",
+                ROS_WARN("[planning_handler]: [sbpl_only] Execution of hector planner failed for goal (%.2f, %.2f)",
                          goalForTrajectory.pose.position.x, goalForTrajectory.pose.position.y);
                 if (hectorMoveBaseInterface->getGlobalGoal().do_exploration)
                 {

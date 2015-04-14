@@ -10,7 +10,6 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     main_loop_thread_(NULL),
     move_base_plugin_loader_("nav_core", "nav_core::RecoveryBehavior")
 {
-
     ros::NodeHandle nh;        
 
     private_nh_.param("circumscribed_radius", circumscribedRadius_, 0.3);
@@ -56,8 +55,6 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
             ROS_WARN("Invalid footprint element passed into rosparam footprint");
         }
     }
-
-    // jointStates_sub_ = nh.subscribe<sensor_msgs::JointState>("joint_states", 1, boost::bind(&HectorMoveBase::jointStatesCB, this, _1));
 
     costmap_ = new costmap_2d::Costmap2DROS("global_costmap", tf_);
     footprint_pub_ = private_nh_.advertise<geometry_msgs::Polygon>("global_costmap/footprint", 0);
@@ -626,7 +623,7 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
         }
         // if result id equals current goal but not global goal
         if (isGoalIDEqual(current_action_path.goal_id, result->status.goal_id)) {
-            ROS_DEBUG("[hector_move_base]: number of goals: %i", goals_.size());
+            ROS_DEBUG("[hector_move_base]: number of goals: %lu", goals_.size());
             double diff_x = fabs(current_action_path.goal.target_path.poses.back().pose.position.x - global_goal.target_pose.pose.position.x);
             double diff_y = fabs(current_action_path.goal.target_path.poses.back().pose.position.y - global_goal.target_pose.pose.position.y);
             if ((pow(diff_x, 2) + pow(diff_y, 2)) < pow(goalReachedRadius_, 2)) {

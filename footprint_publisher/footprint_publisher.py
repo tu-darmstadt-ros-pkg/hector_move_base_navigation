@@ -31,19 +31,19 @@ def initial_footprint():
     prb = Point32()
     prt = Point32()
 
-    plt.x = 0.35
+    plt.x = 0.4
     plt.y = 0.2
     plt.z = 0
 
-    plb.x = -0.35
+    plb.x = -0.4
     plb.y = 0.2
     plb.z = 0
 
-    prb.x = -0.35
+    prb.x = -0.4
     prb.y = -0.2
     prb.z = 0
 
-    prt.x = 0.35
+    prt.x = 0.4
     prt.y = -0.2
     prt.z = 0
 
@@ -76,15 +76,13 @@ def joint_state_callback(js):
     pub.publish(footprint)
 
 
-    #rospy.loginfo('state = %s %f %f', js.name, js.velocity, js.position)
-
 def run_subscriber():
     rospy.Subscriber('joint_states', JointState, joint_state_callback)
     rospy.spin()
 
 if __name__ == '__main__':
     rospy.init_node('footprint_publisher')
-    rospy.loginfo('Hello, World!')
+    rospy.loginfo('>> Footprint publisher running! <<')
 
     pub = rospy.Publisher('/move_base/global_costmap/footprint', Polygon, queue_size = 10)
     run_subscriber()

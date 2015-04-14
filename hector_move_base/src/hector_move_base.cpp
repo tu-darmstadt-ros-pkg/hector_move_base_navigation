@@ -479,8 +479,6 @@ void HectorMoveBase::jointStatesCB(const sensor_msgs::JointState & state)
 }
 
 void HectorMoveBase::simple_goalCB(const geometry_msgs::PoseStamped::ConstPtr& simpleGoal){
-    ROS_INFO("SIMPLE GOAL CALLBACK!");
-
     ROS_DEBUG("[hector_move_base]: In simple goal callback");
     abortedGoal();
     handlerActionGoal newGoal = handlerActionGoal();

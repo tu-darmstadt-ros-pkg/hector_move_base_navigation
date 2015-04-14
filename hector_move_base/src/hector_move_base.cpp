@@ -117,7 +117,7 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     if(use_exploring_)
         mappingForPublishFeedback.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, waitForReplanningState_));
     else
-        mappingForPublishFeedback.insert(std::make_pair(NEXT, planningState_));
+        mappingForPublishFeedback.insert(std::make_pair(NEXT, idleState_));
     statemachine_->addHandlerMapping(publishFeedbackState_, mappingForPublishFeedback);
 
     std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForWaitForReplanning;
@@ -423,6 +423,7 @@ void HectorMoveBase::exploreCB(const hector_move_base_msgs::MoveBaseActionExplor
 }
 
 void HectorMoveBase::goalCB(const hector_move_base_msgs::MoveBaseActionGoal::ConstPtr& goal){
+    ROS_INFO("GOAL CALLBACK!");
     ROS_DEBUG("[hector_move_base]: In goal callback");
     abortedGoal();
 
@@ -510,6 +511,8 @@ void HectorMoveBase::jointStatesCB(const sensor_msgs::JointState & state)
 }
 
 void HectorMoveBase::simple_goalCB(const geometry_msgs::PoseStamped::ConstPtr& simpleGoal){
+    ROS_INFO("SIMPLE GOAL CALLBACK!");
+
     ROS_DEBUG("[hector_move_base]: In simple goal callback");
     abortedGoal();
     handlerActionGoal newGoal = handlerActionGoal();

@@ -11,7 +11,8 @@ public:
 	
     }
 
-    hector_move_base::RESULT handle(){
+    hector_move_base::RESULT handle()
+    {
         return hector_move_base::NEXT;
     }
 

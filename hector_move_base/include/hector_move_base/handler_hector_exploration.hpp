@@ -93,8 +93,6 @@ public:
     }
 
     hector_move_base::RESULT handle() {
-        ROS_DEBUG("[exploration_handler]: start exploration");
-
         hector_move_base::handlerActionGoal current_goal = hectorMoveBaseInterface->getGlobalGoal();
         if (current_goal.do_exploration){
             std::vector<geometry_msgs::PoseStamped> plan;

@@ -15,6 +15,7 @@ public:
     }
 
     hector_move_base::RESULT handle(){
+
         if (hectorMoveBaseInterface->getGlobalGoal().do_exploration) {
             ROS_DEBUG("[wait_for_reexploring_handler]: check reexploring time (%f < %f)", ros::Time::now().toSec(), (hectorMoveBaseInterface->getCurrentGoal().goal_id.stamp + ros::Duration(time_to_trigger_exploration_)).toSec());
             if ((hectorMoveBaseInterface->getCurrentGoal().goal_id.stamp + ros::Duration(time_to_trigger_exploration_)) < ros::Time::now()) {

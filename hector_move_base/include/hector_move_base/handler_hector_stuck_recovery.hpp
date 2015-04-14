@@ -56,8 +56,6 @@ public:
 
     hector_move_base::RESULT handle(){
 
-        ROS_INFO("Running inverse trajectory recovery");
-
         if (counter > 4) {
             reset();
             return hector_move_base::FAIL;

@@ -17,6 +17,11 @@ axis_diff = 0.41
 ctr_2_flipper_end = 0.665 # 0.365
 ctr_2_robot_edge = 0.165 # = radius?
 
+#---------------------
+# Computes the flipper
+# extension for a
+# given angle
+#---------------------
 def compute_extension(angle):
     #    print angle
     #    print ctr_2_flipper_end * math.cos(angle)
@@ -24,36 +29,51 @@ def compute_extension(angle):
     #    print '--'
     return ctr_2_flipper_end * math.cos(angle) + flipper_radius * abs(math.sin(angle)) - ctr_2_robot_edge
 
+#---------------------
+# Calculates the L2-
+# distance between
+# two polygons --
+# defined by their
+# point vectors
+#---------------------
 def polygon_l2_diff(pl, pr):
     if len(pl) != len(pr):
         return float('inf')
     return sum(map(lambda e1,e2: pow(e1.x - e2.x, 2) + pow(e1.y - e2.y, 2) + pow(e1.z - e2.z, 2), pl, pr), 0)
 
-def list_2_point32(a):
+#---------------------
+# Transforms a list
+# with two doubles
+# into a Point32 from
+# geometry_msgs
+#---------------------
+def list_2_footprint_point32(a):
     p = Point32()
     p.x = a[0]
     p.y = a[1]
     p.z = 0
     return p
 
+#---------------------
+# Manage the history
+# of footprints
+#---------------------
 class footprint_info(object):
     initial = []
     current = []
 
-    # ------------------#
-    # plt--prt          #
-    #  |    |           #
-    # plb--prb          #
-    #                   #
-    # [plt plb prb prt] #
-    # ------------------#
+    #---------------------
+    # plt--prt
+    #  |    |
+    # plb--prb
+    #
+    # [plt plb prb prt]
+    #---------------------
     def set_initial_footprint(self):
-
         if rospy.has_param('~global_costmap/footprint'):
             polygons = rospy.get_param('~global_costmap/footprint')
-            self.initial = map(list_2_point32, polygons)
+            self.initial = map(list_2_footprint_point32, polygons)
             self.current = deepcopy(self.initial)
-
         else:
             plt = Point32() # left right correct? <== TODO!
             plb = Point32()
@@ -78,17 +98,25 @@ class footprint_info(object):
 
             self.initial = [plt, plb, prb, prt]
 
-
-
+    #---------------------
+    # New joint states
+    # =>
+    # recompute footprint
+    # publish if needed
+    #---------------------
     def joint_state_callback(self,js):
-        ifront = js.name.index('front_flipper_joint')
-        irear = js.name.index('rear_flipper_joint')
+        front_ext = 0.0
+        rear_ext = 0.0
 
-        rear_cutted = max(min(js.position[irear], math.pi / 2), -math.pi / 2)
-        front_cutted = max(min(js.position[ifront], math.pi / 2), -math.pi / 2)
+        if 'front_flipper_joint' in js.name:
+            ifront = js.name.index('front_flipper_joint')
+            front_cutted = max(min(js.position[ifront], math.pi / 2), -math.pi / 2)
+            front_ext = compute_extension(front_cutted)
 
-        rear_ext = compute_extension(rear_cutted)
-        front_ext = compute_extension(front_cutted)
+        if 'rear_flipper_joint' in js.name:
+            irear = js.name.index('rear_flipper_joint')
+            rear_cutted = max(min(js.position[irear], math.pi / 2), -math.pi / 2)
+            rear_ext = compute_extension(rear_cutted)
 
         footprint = deepcopy(self.initial)
 
@@ -98,18 +126,12 @@ class footprint_info(object):
         footprint[2].x -= rear_ext
 
         if polygon_l2_diff(footprint, self.current) > 0.05:
-            print '--'
-            print polygon_l2_diff(footprint, self.current)
-            print '--'
-
             self.current = deepcopy(footprint)
             pub.publish(footprint)
 
-            print self.initial
-            print '--'
-            print footprint
-
-
+    #---------------------
+    # Constructor
+    #---------------------
     def __init__(self):
         self.set_initial_footprint()
 
@@ -120,6 +142,7 @@ class footprint_info(object):
 def run_subscriber(fpi):
     rospy.Subscriber('joint_states', JointState, lambda js: fpi.joint_state_callback(js))
     rospy.spin()
+
 
 #---------------------
 # Entry point

@@ -42,10 +42,10 @@ if UNICYCLE_MPRIM_16DEGS == 1
     basemprimendpts0_c(10,:) = [-7 -3  2 theta_2_16_costmult];
     basemprimendpts0_c(11,:) = [-7  3 -2 theta_2_16_costmult];
     %4/16 theta change
-    basemprimendpts0_c(12,:) = [-7  7 -4 theta_4_16_costmult];
-    basemprimendpts0_c(13,:) = [-7 -7  4 theta_4_16_costmult];
-    basemprimendpts0_c(14,:) = [ 7  7  4 theta_4_16_costmult];
-    basemprimendpts0_c(15,:) = [ 7 -7 -4 theta_4_16_costmult];
+    basemprimendpts0_c(12,:) = [-8  8 -4 theta_4_16_costmult];
+    basemprimendpts0_c(13,:) = [-8 -8  4 theta_4_16_costmult];
+    basemprimendpts0_c(14,:) = [ 8  8  4 theta_4_16_costmult];
+    basemprimendpts0_c(15,:) = [ 8 -8 -4 theta_4_16_costmult];
 
     
     %45 degrees
@@ -89,10 +89,10 @@ if UNICYCLE_MPRIM_16DEGS == 1
     basemprimendpts22p5_c(10,:) = [-4 -4  2 theta_2_16_costmult];
     basemprimendpts22p5_c(11,:) = [-7 -0 -2 theta_2_16_costmult];  
     %4/16 theta change
-    basemprimendpts22p5_c(12,:) = [ 13  -6  -4 theta_4_16_costmult];
-    basemprimendpts22p5_c(13,:) = [  5  13   4 theta_4_16_costmult];
-    basemprimendpts22p5_c(14,:) = [-13   6  -4 theta_4_16_costmult];
-    basemprimendpts22p5_c(15,:) = [ -5 -13   4 theta_4_16_costmult];
+    basemprimendpts22p5_c(12,:) = [ 14  -7  -4 theta_4_16_costmult];
+    basemprimendpts22p5_c(13,:) = [  6  14   4 theta_4_16_costmult];
+    basemprimendpts22p5_c(14,:) = [-14   7  -4 theta_4_16_costmult];
+    basemprimendpts22p5_c(15,:) = [ -6 -14   4 theta_4_16_costmult];
 
     
 else

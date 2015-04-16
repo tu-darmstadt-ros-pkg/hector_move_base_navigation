@@ -16,7 +16,7 @@
 #include <algorithm>
 #include <sstream>
 
-#define END_TWIST
+//#define END_TWIST
 
 static double angular_norm(double diff)
 {

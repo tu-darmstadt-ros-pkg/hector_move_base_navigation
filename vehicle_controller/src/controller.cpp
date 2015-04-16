@@ -16,7 +16,7 @@
 #include <algorithm>
 #include <sstream>
 
-//#define END_TWIST
+// #define END_TWIST
 
 static double angular_norm(double diff)
 {
@@ -149,7 +149,8 @@ bool Controller::configure()
 void Controller::stateCallback(const nav_msgs::Odometry& state)
 {
     dt = (state.header.stamp - this->pose.header.stamp).toSec();
-    if (dt < 0.0 || dt > 1.0) dt = 0.0;
+    if (dt < 0.0 || dt > 1.0)
+        invalidateDt();
 
     this->pose.header = state.header;
     this->pose.pose = state.pose.pose;
@@ -637,14 +638,19 @@ void Controller::update()
 
     // calculate steering angle
     double relative_angle = angular_norm(atan2(carrot.y - pose.pose.position.y, carrot.x - pose.pose.position.x) - angles[0]);
-    double orientation_error = angular_norm(carrot.orientation - angles[0]);
+
+    double beta = atan2(carrot.y - pose.pose.position.y, carrot.x - pose.pose.position.x);
+    double orientation_error = angular_norm(-beta + angles[0]); // angular_norm(carrot.orientation - angles[0]);
+    // ROS_INFO("[PD INFO] a  b  b-a  prev = %f  %f  %f  %f", angles[0], beta, angular_norm(angular_norm(-beta + angles[0])), angular_norm(carrot.orientation - angles[0]));
     float sign = legs[current].backward ? -1.0 : 1.0;
     float speed = sign * legs[current].speed;
 
-    this->vehicle_control_interface_->executeMotionCommand(relative_angle, orientation_error, motion_control_setup.carrot_distance, speed );
+    double signed_carrot_distance_2_robot = sign * euclideanDistance(carrotPose.pose.position, pose.pose.position);
+    this->vehicle_control_interface_->executeMotionCommand(relative_angle, orientation_error, motion_control_setup.carrot_distance,
+                                                           speed, signed_carrot_distance_2_robot, dt);
 
     // check if vehicle is blocked
-    if (check_if_blocked && dt > 0.0) {
+    if (check_if_blocked && dt > 0.0) { // @ TODO : PM suggest change td > 0.0 to !isDtInvalid()
         double current_velocity_error = 0.0;
         current_velocity_error = (motion_control_setup.current_velocity - vehicle_control_interface_->getCommandedSpeed()) / std::max(fabs(vehicle_control_interface_->getCommandedSpeed()), 0.1);
         if (vehicle_control_interface_->getCommandedSpeed() > 0) {

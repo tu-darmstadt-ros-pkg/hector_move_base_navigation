@@ -33,6 +33,7 @@
 #include <geometry_msgs/Twist.h>
 #include "vehicle_control_interface.h"
 #include <algorithm>
+#include <fstream>
 
 class DifferentialDriveController: public VehicleControlInterface
 {
@@ -54,6 +55,7 @@ class DifferentialDriveController: public VehicleControlInterface
       //       max_angular_rate_ = max_speed_ / (wheel_separation_ * 0.5);
       // However, this turned out to be way to fast for the robot on the
       // oil site platform.
+
     }
 
     virtual void executeTwist(const geometry_msgs::Twist& inc_twist)
@@ -62,6 +64,57 @@ class DifferentialDriveController: public VehicleControlInterface
       this->limitTwist(twist);
       cmdVelRawPublisher_.publish(twist);
     }
+
+
+    void executePDControlledMotionCommand(double e_angle, double e_position, double dt)
+    {
+        static const double KP_ANGLE = 2.25;
+        static const double KD_ANGLE = 0.52;
+        static const double KP_POSITION = 1.0;
+        static const double KD_POSITION = 0.0; //0.5;
+
+        static double previous_e_angle = e_angle;
+        static double previous_e_position = e_position;
+
+        double de_angle_dt    = (e_angle - previous_e_angle) / dt; //? uncontinuity @ orientation_error vs relative_angle switch
+        double de_position_dt = (e_position - previous_e_position) / dt;
+
+        double speed = KP_POSITION * e_position + KD_POSITION * de_position_dt;
+        double z_twist = KP_ANGLE * e_angle + KD_ANGLE * de_angle_dt;
+
+        twist.linear.x = speed;
+        twist.angular.z = z_twist;
+
+        this->limitTwist(twist);
+        cmdVelRawPublisher_.publish(twist);
+
+//        ROS_INFO("[PD INFO] e = (%f %f), c = (%f %f), cl = (%f %f)",
+//                 e_position, e_angle / M_PI * 180, speed, z_twist / M_PI * 180,
+//                 twist.linear.x, twist.angular.z / M_PI * 180);
+
+//        std::fstream fs;
+//        fs.open ("pd_tracker.csv", std::fstream::out | std::fstream::app);
+//        fs << dt << "," << e_position << "," <<  de_position_dt << ","
+//           << e_angle << "," << de_angle_dt << ","
+//           << speed << "," << twist.linear.x << ","
+//           << z_twist / M_PI * 180 << "," << twist.angular.z / M_PI * 180
+//           << std::endl;
+
+
+        previous_e_angle = e_angle;
+        previous_e_position = e_position;
+    }
+
+    virtual void executeMotionCommand(double carrot_relative_angle, double carrot_orientation_error,
+                                      double carrot_distance, double speed,
+                                      double signed_carrot_distance_2_robot, double dt)
+    {
+        double e_angle = speed < 0 ? carrot_orientation_error : carrot_relative_angle;
+        // executePDControlledMotionCommand()
+        executePDControlledMotionCommand(e_angle, signed_carrot_distance_2_robot, dt);
+        // executeMotionCommand(carrot_relative_angle, carrot_orientation_error, carrot_distance, speed);
+    }
+
 
     virtual void executeMotionCommand(double carrot_relative_angle, double carrot_orientation_error, double carrot_distance, double speed)
     {
@@ -76,6 +129,7 @@ class DifferentialDriveController: public VehicleControlInterface
       }
 
       this->limitTwist(twist);
+      ROS_INFO("[MC INFO] cl = (%f %f)", twist.linear.x, twist.angular.z / M_PI * 180);
 
       cmdVelRawPublisher_.publish(twist);
     }
@@ -111,8 +165,8 @@ class DifferentialDriveController: public VehicleControlInterface
       //Calculate the speed reduction factor that we need to apply to be able to achieve desired angular rate.
       double speed_reduction_factor = (max_speed_ - fabs(angular_rate) * (wheel_separation_ * 0.5)) / max_speed_;
 
-      if (fabs(speed) > speed_reduction_factor * max_speed_){
-        speed = speed * speed_reduction_factor;
+      if (fabs(speed) > fabs(speed_reduction_factor) * max_speed_){
+        speed = speed * fabs(speed_reduction_factor);
       }
 
       twist.linear.x = speed;
@@ -121,6 +175,7 @@ class DifferentialDriveController: public VehicleControlInterface
 
   protected:
     ros::Publisher cmdVelRawPublisher_;
+
 
     geometry_msgs::Twist twist;
 

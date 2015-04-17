@@ -29,7 +29,7 @@ if UNICYCLE_MPRIM_16DEGS == 1
     %0 theta change
     basemprimendpts0_c(1,:)  = [ 1  0  0 theta_0_16_costmult];
     basemprimendpts0_c(2,:)  = [ 8  0  0 theta_0_16_costmult];
-    basemprimendpts0_c(3,:)  = [-1  0  0 theta_0_16_r_costmult];    
+    basemprimendpts0_c(3,:)  = [-1  0  0 theta_0_16_costmult];    
     basemprimendpts0_c(4,:)  = [-8  0  0 theta_0_16_costmult];    
     %1/16 theta change
     basemprimendpts0_c(5,:)  = [ 6  1  1 theta_1_16_costmult];
@@ -53,7 +53,7 @@ if UNICYCLE_MPRIM_16DEGS == 1
     %0/16 theta change 
     basemprimendpts45_c(1,:)  = [ 1  1  0 theta_0_16_costmult];
     basemprimendpts45_c(2,:)  = [ 6  6  0 theta_0_16_costmult];
-    basemprimendpts45_c(3,:)  = [-1 -1  0 theta_0_16_r_costmult];
+    basemprimendpts45_c(3,:)  = [-1 -1  0 theta_0_16_costmult];
     basemprimendpts45_c(4,:)  = [-6 -6  0 theta_0_16_costmult];
     %1/16 theta change
     basemprimendpts45_c(5,:)  = [ 3  5  1 theta_1_16_costmult];
@@ -77,7 +77,7 @@ if UNICYCLE_MPRIM_16DEGS == 1
     %0/16 theta change 
     basemprimendpts22p5_c(1,:)  = [ 2  1  0 theta_0_16_costmult];
     basemprimendpts22p5_c(2,:)  = [ 6  3  0 theta_0_16_costmult];    
-    basemprimendpts22p5_c(3,:)  = [-2 -1  0 theta_0_16_r_costmult];     
+    basemprimendpts22p5_c(3,:)  = [-2 -1  0 theta_0_16_costmult];     
     basemprimendpts22p5_c(4,:)  = [-2 -1  0 theta_0_16_costmult];         
     %1/16 theta change
     basemprimendpts22p5_c(5,:)  = [ 4  3  1 theta_1_16_costmult];

@@ -8,7 +8,7 @@ global_costmap:
   footprint: [[0.45, 0.25],
               [-0.45, 0.25],
               [-0.45, -0.25],
-              [0.45 -0.25]]
+              [0.45, -0.25]]
   inflation_radius: 0.32
 #   transform_tolerance: 0.5
   inscribed_radius: 0.14

@@ -407,7 +407,7 @@ void HectorMoveBase::goalCB(const hector_move_base_msgs::MoveBaseActionGoal::Con
 }
 
 void HectorMoveBase::observationCB(const hector_move_base_msgs::MoveBaseActionGoal::ConstPtr& goal){
-    ROS_DEBUG("[hector_move_base]: In observation callback");
+    ROS_INFO("[hector_move_base]: In observation callback");
     abortedGoal();
 
     handlerActionGoal newGoal = handlerActionGoal();
@@ -555,6 +555,32 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
             setNextState(stuckPlanningRecoveryState_);
             return;
         }
+
+        ROS_WARN("[hector_move_base]: UNHANDLED state in move base when goal aborted.");
+        if(currentState_ == publishPathState_)
+            ROS_WARN("[hector_move_base]: state = publishPathState");
+        if(currentState_ == publishFeedbackState_)
+            ROS_WARN("[hector_move_base]: state = publishFeedbackState");
+        if(currentState_ == publishSuccessState_)
+            ROS_WARN("[hector_move_base]: state = publishSuccessState");
+        if(currentState_ == publishPreemptedState_)
+            ROS_WARN("[hector_move_base]: state = publishPreemptedState");
+        if(currentState_ == publishAbortState_)
+            ROS_WARN("[hector_move_base]: state = publishAbortState");
+        if(currentState_ == publishRejectedState_)
+            ROS_WARN("[hector_move_base]: state = publishRejectedState");
+        if(currentState_ == waitForReplanningState_)
+            ROS_WARN("[hector_move_base]: state = waitForReplanningState");
+        if(currentState_ == waitForReexploringState_)
+            ROS_WARN("[hector_move_base]: state = waitForReexploringState");
+        if(currentState_ == stuckExplorationRecoveryState_)
+            ROS_WARN("[hector_move_base]: state = stuckExplorationRecoveryState");
+        if(currentState_ == stuckPlanningRecoveryState_)
+            ROS_WARN("[hector_move_base]: state = stuckPlanningRecoveryState");
+        if(currentState_ == idleState_)
+            ROS_WARN("[hector_move_base]: state = idleState");
+
+        setNextState(stuckExplorationRecoveryState_);
         ROS_WARN("[hector_move_base]: controller sent ABORTED. currentState is neither planning nor exploring.");
         return;
 

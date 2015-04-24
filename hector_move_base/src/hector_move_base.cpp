@@ -132,6 +132,7 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
 
     drivepath_pub_ = controller_nh.advertise<hector_move_base_msgs::MoveBaseActionPath>("path", 0 );
     goalmarker_pub_ = private_nh_.advertise<visualization_msgs::Marker>("goal_marker", 0);
+    state_name_pub_ = private_nh_.advertise<std_msgs::String>("state_name", 30);
 
     explore_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionExplore>("explore", 1, boost::bind(&HectorMoveBase::exploreCB, this, _1));
     goal_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionGoal>("goal", 1, boost::bind(&HectorMoveBase::goalCB, this, _1));
@@ -617,14 +618,24 @@ void HectorMoveBase::moveBaseLoop(ros::NodeHandle& nh, ros::Rate rate) {
     }
 }
 
+void HectorMoveBase::publishStateName(boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> state)
+{
+    std_msgs::String msg;
+    msg.data = typeid(*state.get()).name();
+    state_name_pub_.publish(msg);
+}
+
 void HectorMoveBase::moveBaseStep() {
     RESULT result = currentState_->handle();
-    if (currentState_ != nextState_) {
+    if (currentState_ != nextState_)
+    {
         currentState_ = nextState_;
+        publishStateName(currentState_);
         ROS_DEBUG("[hector_move_base]: nextState_ was set, ignoring statemachine mapping");
         return;
     }
-    switch (result) {
+    switch (result)
+    {
     case WAIT:
         ROS_DEBUG("[hector_move_base]: result is WAIT, currentState_ will be kept");
         return;
@@ -632,6 +643,7 @@ void HectorMoveBase::moveBaseStep() {
     default:
         currentState_ = statemachine_->getNextActionForHandler(currentState_, result);
         nextState_ = currentState_;
+        publishStateName(currentState_);
         return;
     }
 

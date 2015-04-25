@@ -60,7 +60,7 @@ private:
     bool use_alternate_planner_;
     std::vector<handlerActionGoal> goals_;
     hector_move_base_msgs::MoveBaseActionPath path_;
-    ros::Publisher current_goal_pub_, drivepath_pub_, feedback_pub_, result_pub_, goalmarker_pub_;
+    ros::Publisher current_goal_pub_, drivepath_pub_, feedback_pub_, result_pub_, goalmarker_pub_, state_name_pub_;
     ros::Subscriber cancel_sub_, controller_result_sub_, explore_sub_, goal_sub_, observation_sub_, syscommand_sub_, simple_goal_sub_;
     ros::ServiceClient tolerance_client_;
     pluginlib::ClassLoader<nav_core::RecoveryBehavior> move_base_plugin_loader_;

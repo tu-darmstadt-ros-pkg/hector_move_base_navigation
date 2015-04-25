@@ -132,6 +132,7 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
 
     drivepath_pub_ = controller_nh.advertise<hector_move_base_msgs::MoveBaseActionPath>("path", 0 );
     goalmarker_pub_ = private_nh_.advertise<visualization_msgs::Marker>("goal_marker", 0);
+    state_name_pub_ = private_nh_.advertise<std_msgs::String>("state_name", 30);
 
     explore_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionExplore>("explore", 1, boost::bind(&HectorMoveBase::exploreCB, this, _1));
     goal_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionGoal>("goal", 1, boost::bind(&HectorMoveBase::goalCB, this, _1));
@@ -644,6 +645,9 @@ void HectorMoveBase::moveBaseLoop(ros::NodeHandle& nh, ros::Rate rate) {
 }
 
 void HectorMoveBase::moveBaseStep() {
+    std_msgs::String str;
+    str.data = typeid(*currentState_.get()).name();
+    state_name_pub_.publish(str);
     RESULT result = currentState_->handle();
     if (currentState_ != nextState_) {
         currentState_ = nextState_;

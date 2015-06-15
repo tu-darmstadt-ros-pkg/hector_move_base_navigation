@@ -45,7 +45,7 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     stuckPlanningRecoveryState_.reset(new hector_move_base_handler::HectorStuckRecoveryHandler(this));
     idleState_.reset(new hector_move_base_handler::HectorIdleHandler(this));
 
-    ROS_DEBUG("[hector_move_base] All states created");
+    ROS_DEBUG("[move_base] States created.");
 
     std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForExploration;
     mappingForExploration.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, planningState_));
@@ -126,7 +126,7 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     mappingForIdleState.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, idleState_));
     statemachine_->addHandlerMapping(idleState_, mappingForIdleState);
 
-    ROS_DEBUG("[hector_move_base] Created statemachine mapping");
+    ROS_DEBUG("[move_base] Created statemachine mapping");
 
     startState_ = exploringState_;
     currentState_ = idleState_;
@@ -377,7 +377,8 @@ void HectorMoveBase::loadDefaultMoveBasePlugins(){
 }
 
 void HectorMoveBase::exploreCB(const hector_move_base_msgs::MoveBaseActionExplore::ConstPtr& goal){
-    ROS_DEBUG("[hector_move_base]: In explore callback");
+    ROS_DEBUG("[hector_move_base] exploreCB");
+
     abortedGoal();
     handlerActionGoal newGoal = handlerActionGoal();
     newGoal.goal_id = goal->goal_id;
@@ -388,9 +389,10 @@ void HectorMoveBase::exploreCB(const hector_move_base_msgs::MoveBaseActionExplor
     return;
 }
 
-void HectorMoveBase::goalCB(const hector_move_base_msgs::MoveBaseActionGoal::ConstPtr& goal){
-    ROS_INFO("GOAL CALLBACK!");
-    ROS_DEBUG("[hector_move_base]: In goal callback");
+void HectorMoveBase::goalCB(const hector_move_base_msgs::MoveBaseActionGoal::ConstPtr& goal)
+{
+    ROS_DEBUG("[move_base] goalCB");
+
     abortedGoal();
 
     handlerActionGoal newGoal = handlerActionGoal();
@@ -476,8 +478,10 @@ void HectorMoveBase::jointStatesCB(const sensor_msgs::JointState & state)
 
 }
 
-void HectorMoveBase::simple_goalCB(const geometry_msgs::PoseStamped::ConstPtr& simpleGoal){
-    ROS_DEBUG("[hector_move_base]: In simple goal callback");
+void HectorMoveBase::simple_goalCB(const geometry_msgs::PoseStamped::ConstPtr& simpleGoal)
+{
+    ROS_DEBUG("[move_base] simple_goalCB");
+
     abortedGoal();
     handlerActionGoal newGoal = handlerActionGoal();
     newGoal.goal_id.stamp = simpleGoal->header.stamp;
@@ -489,8 +493,10 @@ void HectorMoveBase::simple_goalCB(const geometry_msgs::PoseStamped::ConstPtr& s
     return;
 }
 
-void HectorMoveBase::cancelCB(const std_msgs::Empty::ConstPtr& empty){
-    ROS_DEBUG("[hector_move_base]: In cancel callback");
+void HectorMoveBase::cancelCB(const std_msgs::Empty::ConstPtr& empty)
+{
+    ROS_DEBUG("[move_base] cancelCB");
+
     abortedGoal();
     setNextState(idleState_);
 }
@@ -522,8 +528,9 @@ void HectorMoveBase::syscommandCB(const std_msgs::String::ConstPtr& string){
     return;
 }
 
-void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseActionResult::ConstPtr& result){
-    ROS_DEBUG("[hector_move_base]: In controller result callback");
+void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseActionResult::ConstPtr& result)
+{
+    ROS_DEBUG("[move_base] controllerResultCB");
 
     hector_move_base_msgs::MoveBaseActionPath current_action_path = getCurrentActionPath();
     handlerActionGoal global_goal = getGlobalGoal();

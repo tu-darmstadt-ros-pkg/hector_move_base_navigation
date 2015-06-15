@@ -28,7 +28,7 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
 
     costmap_ = new costmap_2d::Costmap2DROS("global_costmap", tf_);
 
-    ROS_DEBUG("[hector_move_base]: costmap loaded");
+    ROS_DEBUG("[hector_move_base] Costmap loaded");
 
     exploringState_.reset(new hector_move_base_handler::HectorExplorationHandler(this));
     planningState_.reset(new hector_move_base_handler::HectorPlanningHandler(this));
@@ -45,9 +45,7 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     stuckPlanningRecoveryState_.reset(new hector_move_base_handler::HectorStuckRecoveryHandler(this));
     idleState_.reset(new hector_move_base_handler::HectorIdleHandler(this));
 
-    ROS_DEBUG("[hector_move_base]: all states created");
-
-    ROS_INFO("created costmap");
+    ROS_DEBUG("[hector_move_base] All states created");
 
     std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForExploration;
     mappingForExploration.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, planningState_));
@@ -128,7 +126,7 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     mappingForIdleState.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, idleState_));
     statemachine_->addHandlerMapping(idleState_, mappingForIdleState);
 
-    ROS_DEBUG("[hector_move_base]: states connected to a statemachine");
+    ROS_DEBUG("[hector_move_base] Created statemachine mapping");
 
     startState_ = exploringState_;
     currentState_ = idleState_;

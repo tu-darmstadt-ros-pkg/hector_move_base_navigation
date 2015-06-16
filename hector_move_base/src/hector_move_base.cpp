@@ -4,14 +4,13 @@ namespace hector_move_base {
 
 HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     costmap_(NULL),
+    nh_(""),
     private_nh_("~"),
     statemachine_(new HectorMoveBaseStateMachine),
     tf_(tf),
     main_loop_thread_(NULL),
     move_base_plugin_loader_("nav_core", "nav_core::RecoveryBehavior"),
-    action_server_(private_nh_, name, false) {
-
-    ros::NodeHandle nh;
+    action_server_(nh_, name, false) {
 
     private_nh_.param("circumscribed_radius", circumscribedRadius_, 0.3);
     private_nh_.param("goal_reached_radius", goalReachedRadius_, 0.2);
@@ -146,8 +145,8 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
 //    goal_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionGoal>("goal", 1, boost::bind(&HectorMoveBase::goalCB, this, _1));
 //    observation_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionGoal>("observe", 1, boost::bind(&HectorMoveBase::observationCB, this, _1));
 //    simple_goal_sub_ = private_nh_.subscribe<geometry_msgs::PoseStamped>("simple_goal", 1, boost::bind(&HectorMoveBase::simple_goalCB, this, _1));
-    cancel_sub_ = private_nh_.subscribe<std_msgs::Empty>("cancel", 1, boost::bind(&HectorMoveBase::cancelCB, this, _1));
-    syscommand_sub_ = nh.subscribe<std_msgs::String>("syscommand", 1, boost::bind(&HectorMoveBase::syscommandCB, this, _1));
+//    cancel_sub_ = private_nh_.subscribe<std_msgs::Empty>("cancel", 1, boost::bind(&HectorMoveBase::cancelCB, this, _1));
+    syscommand_sub_ = nh_.subscribe<std_msgs::String>("syscommand", 1, boost::bind(&HectorMoveBase::syscommandCB, this, _1));
 
     controller_result_sub_ = controller_nh.subscribe<hector_move_base_msgs::MoveBaseActionResult>("result", 1, boost::bind(&HectorMoveBase::controllerResultCB, this, _1));
 
@@ -524,11 +523,11 @@ void HectorMoveBase::asCancelCB() {
   setNextState(idleState_);
 }
 
-void HectorMoveBase::cancelCB(const std_msgs::EmptyConstPtr &empty) {
-    ROS_DEBUG("[hector_move_base]: In cancel callback");
-    abortedGoal();
-    setNextState(idleState_);
-}
+//void HectorMoveBase::cancelCB(const std_msgs::EmptyConstPtr &empty) {
+//    ROS_DEBUG("[hector_move_base]: In cancel callback");
+//    abortedGoal();
+//    setNextState(idleState_);
+//}
 
 void HectorMoveBase::syscommandCB(const std_msgs::StringConstPtr &string) {
     ROS_DEBUG("[hector_move_base]: In syscommandCB callback: %s", string->data.c_str());
@@ -685,13 +684,19 @@ void HectorMoveBase::moveBaseStep() {
 
 void HectorMoveBase::abortedGoal() {
     currentState_->abort();
-    publishAbortState_->handle();
+    hector_move_base_msgs::MoveBaseResult result;
+    result.result = hector_move_base_msgs::MoveBaseResult::FAIL;
+    action_server_.setAborted(result, "ABORTED");
+//    publishAbortState_->handle();
     clearGoal();
 }
 
 void HectorMoveBase::preemptedGoal() {
     currentState_->abort();
-    publishPreemptedState_->handle();
+    hector_move_base_msgs::MoveBaseResult result;
+    result.result = hector_move_base_msgs::MoveBaseResult::FAIL;
+    action_server_.setPreempted(result, "PREEMPTED");
+//    publishPreemptedState_->handle();
     // do not send an empty path when preempted. Preempted is triggered when controller received an ActionGoal/Path
 //    clearGoal();
     goals_.clear();
@@ -711,7 +716,10 @@ void HectorMoveBase::recoveryGoal() {
 
 void HectorMoveBase::successGoal() {
     currentState_->abort();
-    publishSuccessState_->handle();
+    hector_move_base_msgs::MoveBaseResult result;
+    result.result = hector_move_base_msgs::MoveBaseResult::SUCCESS;
+    action_server_.setSucceeded(result, "SUCCESS");
+//    publishSuccessState_->handle();
     clearGoal();
 }
 

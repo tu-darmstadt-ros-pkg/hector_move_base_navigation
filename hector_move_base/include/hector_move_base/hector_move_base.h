@@ -48,7 +48,7 @@ class HectorMoveBase : public IHectorMoveBase {
 
 private:
     costmap_2d::Costmap2DROS* costmap_;
-    ros::NodeHandle private_nh_;
+    ros::NodeHandle nh_, private_nh_;
     boost::shared_ptr<HectorMoveBaseStateMachine> statemachine_;
     tf::TransformListener& tf_;
     boost::thread* main_loop_thread_;
@@ -123,7 +123,7 @@ private:
 //    void simple_goalCB(const geometry_msgs::PoseStampedConstPtr &simpleGoal);
     void cmd_velCB(const ros::MessageEvent<geometry_msgs::Twist> &event);
     void asCancelCB();
-    void cancelCB(const std_msgs::EmptyConstPtr &empty);
+//    void cancelCB(const std_msgs::EmptyConstPtr &empty);
     void syscommandCB(const std_msgs::StringConstPtr &string);
     void controllerResultCB(const hector_move_base_msgs::MoveBaseActionResultConstPtr &result);
 

@@ -6,6 +6,13 @@ project(inverse_trajectory_recovery)
 # TODO: remove all from COMPONENTS that are not catkin packages.
 find_package(catkin REQUIRED COMPONENTS roscpp nav_core tf costmap_2d geometry_msgs base_local_planner pluginlib hector_nav_msgs hector_move_base_msgs)
 
+catkin_package(
+    DEPENDS roscpp nav_core tf costmap_2d geometry_msgs base_local_planner pluginlib hector_nav_msgs hector_move_base_msgs
+    CATKIN_DEPENDS # TODO
+    INCLUDE_DIRS # TODO include
+    LIBRARIES # TODO
+)
+
 # include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 # CATKIN_MIGRATION: removed during catkin migration
 # cmake_minimum_required(VERSION 2.4.6)
@@ -44,9 +51,3 @@ add_dependencies(inverse_trajectory_recovery hector_move_base_msgs_generate_mess
 
 # catkin_package parameters: http://ros.org/doc/groovy/api/catkin/html/dev_guide/generated_cmake_api.html#catkin-package
 # TODO: fill in what other packages will need to use this package
-catkin_package(
-    DEPENDS roscpp nav_core tf costmap_2d geometry_msgs base_local_planner pluginlib hector_nav_msgs hector_move_base_msgs
-    CATKIN_DEPENDS # TODO
-    INCLUDE_DIRS # TODO include
-    LIBRARIES # TODO
-)

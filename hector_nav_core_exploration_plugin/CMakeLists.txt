@@ -6,13 +6,13 @@ project(hector_nav_core_exploration_plugin)
 # TODO: remove all from COMPONENTS that are not catkin packages.
 find_package(catkin REQUIRED COMPONENTS hector_nav_core hector_exploration_planner)
 
+
 catkin_package(
     DEPENDS hector_nav_core hector_exploration_planner
     CATKIN_DEPENDS # TODO
     INCLUDE_DIRS include
     LIBRARIES # TODO
 )
-
 # include_directories(include ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 # CATKIN_MIGRATION: removed during catkin migration
 # cmake_minimum_required(VERSION 2.4.6)
@@ -68,3 +68,4 @@ target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} ${catkin_LIBRARIES})
 # catkin_package parameters: http://ros.org/doc/groovy/api/catkin/html/dev_guide/generated_cmake_api.html#catkin-package
 # TODO: fill in what other packages will need to use this package
 
+message("CATKIN_DEVEL_PREFIX = ${CATKIN_DEVEL_PREFIX}")

@@ -16,6 +16,7 @@
 #include <hector_move_base/handler_hector_idle.hpp>
 #include <hector_move_base/hector_move_base_state_machine.h>
 
+#include <hector_move_base_msgs/MoveBaseAction.h>
 #include <hector_move_base_msgs/MoveBaseActionExplore.h>
 #include <hector_move_base_msgs/MoveBaseActionGoal.h>
 #include <hector_move_base_msgs/MoveBaseActionPath.h>
@@ -27,6 +28,7 @@
 
 #include <visualization_msgs/Marker.h>
 
+#include <actionlib/server/simple_action_server.h>
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <ros/ros.h>
@@ -111,6 +113,7 @@ private:
    */
     void exploreCB(const hector_move_base_msgs::MoveBaseActionExplore::ConstPtr& goal);
     void goalCB(const hector_move_base_msgs::MoveBaseActionGoal::ConstPtr& goal);
+    void goalCB(const hector_move_base_msgs::MoveBaseActionGoal& goal);
     void observationCB(const hector_move_base_msgs::MoveBaseActionGoal::ConstPtr& goal);
     void simple_goalCB(const geometry_msgs::PoseStamped::ConstPtr& simpleGoal);
     void cmd_velCB(const ros::MessageEvent<geometry_msgs::Twist>& event);

@@ -140,6 +140,8 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     drivepath_pub_ = controller_nh.advertise<hector_move_base_msgs::MoveBaseActionPath>("path", 0 );
     goalmarker_pub_ = private_nh_.advertise<visualization_msgs::Marker>("goal_marker", 0);
 
+    actionlib::ActionServer<hector_move_base_msgs::MoveBaseAction> action_server_(private_nh_, "ActionGoal", boost::bind(&HectorMoveBase::goalCB, this, _1), false);
+
     explore_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionExplore>("explore", 1, boost::bind(&HectorMoveBase::exploreCB, this, _1));
     goal_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionGoal>("goal", 1, boost::bind(&HectorMoveBase::goalCB, this, _1));
     observation_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionGoal>("observe", 1, boost::bind(&HectorMoveBase::observationCB, this, _1));
@@ -391,17 +393,41 @@ void HectorMoveBase::exploreCB(const hector_move_base_msgs::MoveBaseActionExplor
 }
 
 void HectorMoveBase::goalCB(const hector_move_base_msgs::MoveBaseActionGoal::ConstPtr& goal){
+  ROS_INFO("GOAL CALLBACK!");
+  ROS_DEBUG("[hector_move_base]: In goal callback");
+  abortedGoal();
+
+  handlerActionGoal newGoal = handlerActionGoal();
+  newGoal.goal_id = goal->goal_id;
+  newGoal.speed = goal->goal.speed;
+  newGoal.do_exploration = false;
+
+  //make sure goal could be transformed to costmap frame
+  newGoal.target_pose = goalToGlobalFrame(goal->goal.target_pose);
+  if (newGoal.target_pose.header.frame_id != costmap_->getGlobalFrameID()) {
+      ROS_ERROR("[hector_move_base]: tf transformation into global frame failed. goal will be canceled");
+      //new Goal has to be set in order to publish goal aborted result
+      pushCurrentGoal(newGoal);
+      abortedGoal();
+      return;
+  }
+  pushCurrentGoal(newGoal);
+  setNextState(planningState_);
+  return;
+}
+
+  void HectorMoveBase::goalCB(const hector_move_base_msgs::MoveBaseActionGoal& goal){
     ROS_INFO("GOAL CALLBACK!");
     ROS_DEBUG("[hector_move_base]: In goal callback");
     abortedGoal();
 
     handlerActionGoal newGoal = handlerActionGoal();
-    newGoal.goal_id = goal->goal_id;
-    newGoal.speed = goal->goal.speed;
+    newGoal.goal_id = goal.goal_id;
+    newGoal.speed = goal.goal.speed;
     newGoal.do_exploration = false;
 
     //make sure goal could be transformed to costmap frame
-    newGoal.target_pose = goalToGlobalFrame(goal->goal.target_pose);
+    newGoal.target_pose = goalToGlobalFrame(goal.goal.target_pose);
     if (newGoal.target_pose.header.frame_id != costmap_->getGlobalFrameID()) {
         ROS_ERROR("[hector_move_base]: tf transformation into global frame failed. goal will be canceled");
         //new Goal has to be set in order to publish goal aborted result

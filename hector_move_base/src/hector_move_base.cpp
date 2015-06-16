@@ -379,7 +379,7 @@ void HectorMoveBase::loadDefaultMoveBasePlugins(){
   return;
 }
 
-void HectorMoveBase::exploreCB(const hector_move_base_msgs::MoveBaseActionExplore::ConstPtr& goal){
+void HectorMoveBase::exploreCB(const hector_move_base_msgs::MoveBaseActionExploreConstPtr &goal){
     ROS_DEBUG("[hector_move_base]: In explore callback");
     abortedGoal();
     handlerActionGoal newGoal = handlerActionGoal();
@@ -391,7 +391,7 @@ void HectorMoveBase::exploreCB(const hector_move_base_msgs::MoveBaseActionExplor
     return;
 }
 
-void HectorMoveBase::goalCB(const hector_move_base_msgs::MoveBaseActionGoal::ConstPtr& goal){
+void HectorMoveBase::goalCB(const hector_move_base_msgs::MoveBaseActionGoalConstPtr &goal){
   ROS_INFO("GOAL CALLBACK!");
   ROS_DEBUG("[hector_move_base]: In goal callback");
   abortedGoal();
@@ -415,13 +415,13 @@ void HectorMoveBase::goalCB(const hector_move_base_msgs::MoveBaseActionGoal::Con
   return;
 }
 
-  void HectorMoveBase::asGoalCB(const hector_move_base_action::HectorMoveBaseGoalConstPtr &goal){
+  void HectorMoveBase::asGoalCB(const hector_move_base_msgs::MoveBaseGoalConstPtr &goal){
     ROS_INFO("GOAL CALLBACK!");
     ROS_DEBUG("[hector_move_base]: In goal callback");
     return;
 }
 
-void HectorMoveBase::observationCB(const hector_move_base_msgs::MoveBaseActionGoal::ConstPtr& goal){
+void HectorMoveBase::observationCB(const hector_move_base_msgs::MoveBaseActionGoalConstPtr &goal){
     ROS_DEBUG("[hector_move_base]: In observation callback");
     abortedGoal();
 
@@ -480,12 +480,7 @@ void HectorMoveBase::observationCB(const hector_move_base_msgs::MoveBaseActionGo
     return;
 }
 
-void HectorMoveBase::jointStatesCB(const sensor_msgs::JointState & state)
-{
-
-}
-
-void HectorMoveBase::simple_goalCB(const geometry_msgs::PoseStamped::ConstPtr& simpleGoal){
+void HectorMoveBase::simple_goalCB(const geometry_msgs::PoseStampedConstPtr &simpleGoal){
     ROS_DEBUG("[hector_move_base]: In simple goal callback");
     abortedGoal();
     handlerActionGoal newGoal = handlerActionGoal();
@@ -498,13 +493,13 @@ void HectorMoveBase::simple_goalCB(const geometry_msgs::PoseStamped::ConstPtr& s
     return;
 }
 
-void HectorMoveBase::cancelCB(const std_msgs::Empty::ConstPtr& empty){
+void HectorMoveBase::cancelCB(const std_msgs::EmptyConstPtr &empty){
     ROS_DEBUG("[hector_move_base]: In cancel callback");
     abortedGoal();
     setNextState(idleState_);
 }
 
-void HectorMoveBase::syscommandCB(const std_msgs::String::ConstPtr& string){
+void HectorMoveBase::syscommandCB(const std_msgs::StringConstPtr &string){
     ROS_DEBUG("[hector_move_base]: In syscommandCB callback: %s", string->data.c_str());
 
     if (string->data == "reset") {
@@ -531,7 +526,7 @@ void HectorMoveBase::syscommandCB(const std_msgs::String::ConstPtr& string){
     return;
 }
 
-void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseActionResult::ConstPtr& result){
+void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseActionResultConstPtr &result){
     ROS_DEBUG("[hector_move_base]: In controller result callback");
 
     hector_move_base_msgs::MoveBaseActionPath current_action_path = getCurrentActionPath();

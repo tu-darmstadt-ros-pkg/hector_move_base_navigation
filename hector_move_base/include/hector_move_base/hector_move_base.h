@@ -16,8 +16,6 @@
 #include <hector_move_base/handler_hector_idle.hpp>
 #include <hector_move_base/hector_move_base_state_machine.h>
 
-#include <hector_move_base_action/HectorMoveBaseAction.h>
-#include <argo_vision_msgs/VisualMeasurementAction.h>
 #include <hector_move_base_msgs/MoveBaseAction.h>
 #include <hector_move_base_msgs/MoveBaseActionExplore.h>
 #include <hector_move_base_msgs/MoveBaseActionGoal.h>
@@ -77,7 +75,7 @@ private:
     bool use_exploring_;
 
 protected:
-    actionlib::SimpleActionServer<hector_move_base_action::HectorMoveBaseAction> action_server_;
+    actionlib::SimpleActionServer<hector_move_base_msgs::MoveBaseAction> action_server_;
 
 public:
     /**
@@ -116,16 +114,15 @@ private:
     /**
    * callback methods
    */
-    void exploreCB(const hector_move_base_msgs::MoveBaseActionExplore::ConstPtr& goal);
-    void goalCB(const hector_move_base_msgs::MoveBaseActionGoal::ConstPtr& goal);
-    void asGoalCB(const hector_move_base_action::HectorMoveBaseGoalConstPtr &goal);
-    void observationCB(const hector_move_base_msgs::MoveBaseActionGoal::ConstPtr& goal);
-    void simple_goalCB(const geometry_msgs::PoseStamped::ConstPtr& simpleGoal);
-    void cmd_velCB(const ros::MessageEvent<geometry_msgs::Twist>& event);
-    void cancelCB(const std_msgs::Empty::ConstPtr& empty);
-    void syscommandCB(const std_msgs::String::ConstPtr& string);
-    void controllerResultCB(const hector_move_base_msgs::MoveBaseActionResult::ConstPtr& result);
-    void jointStatesCB(const sensor_msgs::JointState & state);
+    void exploreCB(const hector_move_base_msgs::MoveBaseActionExploreConstPtr &goal);
+    void goalCB(const hector_move_base_msgs::MoveBaseActionGoalConstPtr &goal);
+    void asGoalCB(const hector_move_base_msgs::MoveBaseGoalConstPtr &goal);
+    void observationCB(const hector_move_base_msgs::MoveBaseActionGoalConstPtr &goal);
+    void simple_goalCB(const geometry_msgs::PoseStampedConstPtr &simpleGoal);
+    void cmd_velCB(const ros::MessageEvent<geometry_msgs::Twist> &event);
+    void cancelCB(const std_msgs::EmptyConstPtr &empty);
+    void syscommandCB(const std_msgs::StringConstPtr &string);
+    void controllerResultCB(const hector_move_base_msgs::MoveBaseActionResultConstPtr &result);
 
     void moveBaseLoop(ros::NodeHandle&, ros::Rate);
     void abortedGoal();

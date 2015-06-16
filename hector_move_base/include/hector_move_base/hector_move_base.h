@@ -29,6 +29,7 @@
 #include <visualization_msgs/Marker.h>
 
 #include <actionlib/server/simple_action_server.h>
+#include <actionlib/client/simple_action_client.h>
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <ros/ros.h>
@@ -58,6 +59,7 @@ private:
     boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> stuckExplorationRecoveryState_, stuckPlanningRecoveryState_;
     boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> currentState_, nextState_, startState_;
 
+    int goal_id_counter_;
     geometry_msgs::Polygon footprint_;
     double circumscribedRadius_, goalReachedRadius_, timeToTriggerReplannning_, timeToTriggerExploration_, goalReachchedAngularVariance_, goalReachedSquaredLinearVariance_, observeLinearTolerance_, observeAngularTolerance_;
     std::string controller_namespace_;
@@ -114,12 +116,13 @@ private:
     /**
    * callback methods
    */
-    void exploreCB(const hector_move_base_msgs::MoveBaseActionExploreConstPtr &goal);
-    void goalCB(const hector_move_base_msgs::MoveBaseActionGoalConstPtr &goal);
-    void asGoalCB(const hector_move_base_msgs::MoveBaseGoalConstPtr &goal);
-    void observationCB(const hector_move_base_msgs::MoveBaseActionGoalConstPtr &goal);
-    void simple_goalCB(const geometry_msgs::PoseStampedConstPtr &simpleGoal);
+//    void exploreCB(const hector_move_base_msgs::MoveBaseActionExploreConstPtr &goal);
+//    void goalCB(const hector_move_base_msgs::MoveBaseActionGoalConstPtr &goal);
+    void asGoalCB();
+//    void observationCB(const hector_move_base_msgs::MoveBaseActionGoalConstPtr &goal);
+//    void simple_goalCB(const geometry_msgs::PoseStampedConstPtr &simpleGoal);
     void cmd_velCB(const ros::MessageEvent<geometry_msgs::Twist> &event);
+    void asCancelCB();
     void cancelCB(const std_msgs::EmptyConstPtr &empty);
     void syscommandCB(const std_msgs::StringConstPtr &string);
     void controllerResultCB(const hector_move_base_msgs::MoveBaseActionResultConstPtr &result);

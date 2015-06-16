@@ -421,7 +421,7 @@ void HectorMoveBase::loadDefaultMoveBasePlugins() {
 //}
 
   void HectorMoveBase::asGoalCB() {
-    ROS_INFO("[hector_move_base]: In goal callback");
+    ROS_INFO("[hector_move_base]: In ActionServer goal callback");
     const hector_move_base_msgs::MoveBaseGoalConstPtr goal = action_server_.acceptNewGoal();
 
     abortedGoal();
@@ -519,7 +519,7 @@ void HectorMoveBase::loadDefaultMoveBasePlugins() {
 //}
 
 void HectorMoveBase::asCancelCB() {
-  ROS_DEBUG("[hector_move_base]: In cancel callback");
+  ROS_INFO("[hector_move_base]: In ActionServer Preempt callback");
   abortedGoal();
   setNextState(idleState_);
 }

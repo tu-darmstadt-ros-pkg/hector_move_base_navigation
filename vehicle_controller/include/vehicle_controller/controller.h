@@ -21,6 +21,8 @@
 #include <vehicle_controller/vehicle_control_interface.h>
 #include <vehicle_controller/motion_parameters.h>
 
+#include <vehicle_controller/ps3d.h>
+
 class Controller {
 public:
   typedef enum { INACTIVE, VELOCITY, DRIVETO, DRIVEPATH } State;
@@ -48,6 +50,10 @@ public:
 
   friend int main(int, char**);
 
+  bool pathToBeSmoothed(const std::deque<geometry_msgs::Pose> &transformed_path);
+  bool createDrivepath2MapTransform(tf::StampedTransform  & transform, const nav_msgs::Path& path);
+  geometry_msgs::Pose createPoseFromQuatAndPosition(vec3 const & position, quat const & orientation);
+
 protected:
   virtual bool configure();
   virtual void update();
@@ -72,7 +78,6 @@ protected:
   virtual void publishActionResult(actionlib_msgs::GoalStatus::_status_type, const std::string& text = std::string());
 
   void addLeg(geometry_msgs::Pose const&);
-  void limitSpeed(float &speed);
   void setDriveCommand(float speed, float kappa, float tan_gamma);
 
 private:
@@ -117,16 +122,6 @@ private:
   Legs legs;
 
   // parameters
-  /*
-  double carrot_distance;
-  double min_speed;
-  double current_speed;
-  double max_speed;
-  //double max_steeringangle;
-  double inclination_speed_reduction_factor;
-  double inclination_speed_reduction_time_constant;
-  */
-
   MotionParameters motion_control_setup;
 
   std::string map_frame_id;

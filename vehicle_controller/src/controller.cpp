@@ -3,7 +3,6 @@
 #include <tf/transform_datatypes.h>
 #include <limits>
 
-#include "ps3d.h"
 #include "quaternions.h"
 
 #include <geometry_msgs/PointStamped.h>
@@ -15,6 +14,8 @@
 
 #include <algorithm>
 #include <sstream>
+
+#include <functional>
 
 // #define END_TWIST
 
@@ -41,7 +42,7 @@ static double angular_norm(double diff)
 
 float euclideanDistance(geometry_msgs::Point const & p0, geometry_msgs::Point const & p1)
 {
-  return sqrt(pow(p1.x - p0.x, 2) + pow(p1.y - p0.y, 2) + pow(p1.z - p0.z, 2));
+  return std::sqrt(std::pow(p1.x - p0.x, 2) + std::pow(p1.y - p0.y, 2) + std::pow(p1.z - p0.z, 2));
 }
 
 Controller::Controller(const std::string& ns)
@@ -240,132 +241,118 @@ void Controller::drivepathCallback(const ros::MessageEvent<nav_msgs::Path>& even
     drivepath(*path);
 }
 
+bool Controller::pathToBeSmoothed(std::deque<geometry_msgs::Pose> const & transformed_path)
+{
+    // check if this path shall be smoothed
+    // <=> path is output of exploration planner
+    //     and hence, the points lie in the centers
+    //     of neighbouring grid cells.
+    double lu = 0.05 - 1e-5;
+    double lo = std::sqrt(2.0) * 0.05 + 1e-5;
+    bool path_to_be_smoothed = transformed_path.size() > 2;
+    std::stringstream sstr;
+    for(unsigned i = 1; path_to_be_smoothed && i < transformed_path.size() - 1; ++i)
+    {
+        float d = euclideanDistance(transformed_path[i].position,transformed_path[i - 1].position);
+        path_to_be_smoothed = path_to_be_smoothed && lu < d && d < lo;
+        sstr << " " << d << ":" << (lu < d && d < lo ? "T" : "F");
+    }
+    return path_to_be_smoothed;
+}
+
 bool Controller::drivepath(const nav_msgs::Path& path)
 {
     reset();
-
-    if (path.poses.size() == 0) {
-        ROS_DEBUG("Received empty path");
+    if (path.poses.size() == 0)
+    {
+        ROS_WARN("[vehicle_controller] Received empty path");
         stop();
         publishActionResult(actionlib_msgs::GoalStatus::SUCCEEDED);
         return false;
     }
-
-    if (path.poses.size() == 1) {
-        ROS_WARN("Received path with only one pose, ignoring as this lead to crashes");
+    if (path.poses.size() == 1)
+    {
+        ROS_WARN("[vehicle_controller] Received path with only one pose, ignoring as this lead to crashes");
         stop();
         publishActionResult(actionlib_msgs::GoalStatus::SUCCEEDED);
         return false;
     }
 
     tf::StampedTransform transform;
-    if (!path.header.frame_id.empty()) {
-        try {
-            listener.waitForTransform(this->map_frame_id, path.header.frame_id, path.header.stamp, ros::Duration(3.0));
-            listener.lookupTransform(this->map_frame_id, path.header.frame_id, path.header.stamp, transform);
-        }
-        catch (tf::TransformException ex) {
-            ROS_INFO("TRAFO in Monstertruck Controller failed.");
-            ROS_ERROR("%s", ex.what());
-            stop();
-            publishActionResult(actionlib_msgs::GoalStatus::REJECTED);
-            return false;
-        }
-    } else {
-        ROS_WARN("Received a path with empty frame_id. Assuming %s frame.", map_frame_id.c_str());
-        transform.setIdentity();
-    }
+    if(!createDrivepath2MapTransform(transform, path))
+        return false;
 
-    // compute transformation of waypoints
-    std::deque<geometry_msgs::Pose> transformedPath;
-    for(unsigned i = 0; i < path.poses.size(); ++i)
+    std::deque<geometry_msgs::Pose> map_path(path.poses.size());
+    std::transform(path.poses.begin(), path.poses.end(), map_path.begin(),
+                   [transform](geometry_msgs::PoseStamped const & ps)
+                   {
+                        tf::Pose tf_waypoint;
+                        geometry_msgs::Pose transformed_waypoint;
+                        tf::poseMsgToTF(ps.pose, tf_waypoint);
+                        tf_waypoint = transform * tf_waypoint;
+                        tf::poseTFToMsg(tf_waypoint, transformed_waypoint);
+                        return transformed_waypoint;
+                   });
+
+    if(pathToBeSmoothed(map_path))
     {
-        tf::Pose tf_waypoint;
-        geometry_msgs::Pose transformed_waypoint;
-        tf::poseMsgToTF(path.poses[i].pose, tf_waypoint);
-        tf_waypoint = transform * tf_waypoint;
-        tf::poseTFToMsg(tf_waypoint, transformed_waypoint);
-        transformedPath.push_back(transformed_waypoint);
-    }
-
-
-    // check if this path shall be smoothed
-    // <=> path is output of exploration planner
-    //     and hence, the points lie in the centers
-    //     of neighbouring grid cells.
-    float lu = 0.05 - 1e-5;
-    float lo = sqrt(2.0) * 0.05 + 1e-5;
-    bool path_to_be_smoothed = path.poses.size() > 2;
-    std::stringstream sstr;
-    for(unsigned i = 1; path_to_be_smoothed && i < transformedPath.size() - 1; ++i)
-    {
-        float d = euclideanDistance(transformedPath[i].position,transformedPath[i - 1].position);
-        path_to_be_smoothed = path_to_be_smoothed && lu < d && d < lo;
-        sstr << " " << d << ":" << (lu < d && d < lo ? "T" : "F");
-    }
-    //ROS_INFO("%s\n",sstr.str().c_str());
-
-    if(path_to_be_smoothed) //
-    //  if(false) //
-    {
-        std::vector<geometry_msgs::Pose> smoothedPoses;
-        this->start = transformedPath[0];
+        ROS_DEBUG("[vehicle_controller] Using PathSmoother.");
+        this->start = map_path[0];
         this->start.orientation = this->pose.pose.orientation;
 
         // bool allow_reverse = vehicle_type == "tracked";
-        bool allow_reverse = false;
+        bool allow_reverse = true;
         Pathsmoother3D ps3d(allow_reverse);
 
-        deque_vec3 in_path;
         quat in_start_orientation;
         quat in_end_orientation;
 
-        vector_vec3 out_smoothed_positions;
-        vector_quat out_smoothed_orientations;
-
-        in_path.resize(transformedPath.size());
-        std::transform(transformedPath.begin(), transformedPath.end(), in_path.begin(),
-                       [](geometry_msgs::Pose const & pose_) -> vec3
-        {
-            return vec3(pose_.position.x, pose_.position.y, pose_.position.z);
-        });
+        deque_vec3 in_path;
+        std::transform(map_path.begin(), map_path.end(), std::back_inserter(in_path),
+                       [](geometry_msgs::Pose const & pose_)
+                       { return vec3(pose_.position.x, pose_.position.y, pose_.position.z); });
 
         in_start_orientation = quat(this->pose.pose.orientation.w, this->pose.pose.orientation.x,
                                     this->pose.pose.orientation.y, this->pose.pose.orientation.z);
-        in_end_orientation = quat(transformedPath.back().orientation.w, transformedPath.back().orientation.x,
-                                  transformedPath.back().orientation.y, transformedPath.back().orientation.z);
+        in_end_orientation = quat(map_path.back().orientation.w, map_path.back().orientation.x,
+                                  map_path.back().orientation.y, map_path.back().orientation.z);
 
-        ps3d.smooth(in_path, in_start_orientation, in_end_orientation, out_smoothed_positions, out_smoothed_orientations, false);
+//        if(in_path.size() >= 3)
+//        {
+//            // HACKY fix for (at ARGOS) undesired feature in exploration planner.
+//            // Now, does not contain deviating point at very last position, but extrapolates
+//            // from previous point
 
-        smoothedPoses.resize(out_smoothed_positions.size());
+//            vec3 last_dir = in_path[in_path.size() - 1] - in_path[in_path.size() - 2];
+//            vec3 ref_dir  = in_path[in_path.size() - 2] - in_path[in_path.size() - 3];
+
+//            vec3 new_last_dir = ref_dir.normalized().dot(last_dir) * ref_dir.normalized();
+
+//            in_path.back() = in_path[in_path.size() - 2] + new_last_dir;
+//        }
+
+        vector_vec3 out_smoothed_positions;
+        vector_quat out_smoothed_orientations;
+        ps3d.smooth(in_path, in_start_orientation, in_end_orientation,
+                    out_smoothed_positions, out_smoothed_orientations, false);
+
+        std::vector<geometry_msgs::Pose> smooth_path;
         std::transform(out_smoothed_positions.begin(), out_smoothed_positions.end(),
-                       out_smoothed_orientations.begin(), smoothedPoses.begin(),
-                       [transform](vec3 const & position, quat const & orientation) -> geometry_msgs::Pose
-        {
-            geometry_msgs::Pose pose;
-            pose.position.x = position(0);
-            pose.position.y = position(1);
-            pose.position.z = position(2);
-            pose.orientation.w = orientation.w();
-            pose.orientation.x = orientation.x();
-            pose.orientation.y = orientation.y();
-            pose.orientation.z = orientation.z();
-            return pose;
-        });
-
-        for(unsigned i = 1; i < smoothedPoses.size(); ++i)
-            addLeg(smoothedPoses[i]);
+                       out_smoothed_orientations.begin(), std::back_inserter(smooth_path),
+                       boost::bind(&Controller::createPoseFromQuatAndPosition, this, _1, _2));
+        std::for_each(smooth_path.begin() + 1, smooth_path.end(), boost::bind(&Controller::addLeg, this, _1));
 
         nav_msgs::Path path2publish;
         path2publish.header.frame_id = map_frame_id;
         path2publish.header.stamp = ros::Time::now();
-        for(unsigned i = 0; i < smoothedPoses.size(); ++i)
-        {
-            geometry_msgs::PoseStamped ps;
-            ps.header = path2publish.header;
-            ps.pose = smoothedPoses[i];
-            path2publish.poses.push_back(ps);
-        }
+        std::transform(smooth_path.begin(), smooth_path.end(), std::back_inserter(path2publish.poses),
+                       [path2publish](geometry_msgs::Pose const & pose)
+                       {
+                            geometry_msgs::PoseStamped ps;
+                            ps.header = path2publish.header;
+                            ps.pose = pose;
+                            return ps;
+                       });
         pathPosePublisher.publish(path2publish);
     }
     else
@@ -400,6 +387,48 @@ bool Controller::drivepath(const nav_msgs::Path& path)
     return true;
 }
 
+
+geometry_msgs::Pose Controller::createPoseFromQuatAndPosition(vec3 const & position, quat const & orientation)
+{
+    geometry_msgs::Pose pose;
+    pose.position.x = position(0);
+    pose.position.y = position(1);
+    pose.position.z = position(2);
+    pose.orientation.w = orientation.w();
+    pose.orientation.x = orientation.x();
+    pose.orientation.y = orientation.y();
+    pose.orientation.z = orientation.z();
+    return pose;
+}
+
+
+bool Controller::createDrivepath2MapTransform(tf::StampedTransform & transform, const nav_msgs::Path& path)
+{
+    if (!path.header.frame_id.empty())
+    {
+        try
+        {
+            listener.waitForTransform(this->map_frame_id, path.header.frame_id, path.header.stamp, ros::Duration(3.0));
+            listener.lookupTransform(this->map_frame_id, path.header.frame_id, path.header.stamp, transform);
+        }
+        catch (tf::TransformException ex)
+        {
+            ROS_ERROR("[vehicle_controller] Drivepath transformation to map frame failed. "
+                      "%s", ex.what());
+            stop();
+            publishActionResult(actionlib_msgs::GoalStatus::REJECTED);
+            return false;
+        }
+    }
+    else
+    {
+        ROS_WARN("[vehicle_controller] Received a path with empty frame_id. Assuming frame = %s.", map_frame_id.c_str());
+        transform.setIdentity();
+    }
+    return true;
+}
+
+
 void Controller::cmd_velCallback(const geometry_msgs::Twist& velocity)
 {
     publishActionResult(actionlib_msgs::GoalStatus::PREEMPTED, "received a velocity command");
@@ -428,14 +457,14 @@ void Controller::cmd_velTeleopCallback(const geometry_msgs::Twist& velocity)
     vehicle_control_interface_->executeUnlimitedTwist(velocity);
 }
 
-void Controller::speedCallback(const std_msgs::Float32& speed) {
+void Controller::speedCallback(const std_msgs::Float32& speed)
+{
     motion_control_setup.max_controller_speed_ = speed.data;
 }
 
 bool Controller::alternativeTolerancesService(monstertruck_msgs::SetAlternativeTolerance::Request& req,
                                               monstertruck_msgs::SetAlternativeTolerance::Response& res)
 {
-    ROS_DEBUG("[monstertruck_controller]: tolerance service");
     this->alternative_tolerance_goalID.reset(new actionlib_msgs::GoalID(req.goalID));
     alternative_goal_position_tolerance = req.linearTolerance;
     alternative_angle_tolerance = req.angularTolerance;
@@ -501,19 +530,25 @@ void Controller::addLeg(geometry_msgs::Pose const& pose)
     leg.p2.x = pose.position.x;
     leg.p2.y = pose.position.y;
 
-    if (legs.size() == 0) {
+    if (legs.size() == 0)
+    {
         leg.p1.x = start.position.x;
         leg.p1.y = start.position.y;
         leg.course = atan2(leg.p2.y - leg.p1.y, leg.p2.x - leg.p1.x);
 
-        if (start.orientation.w == 0.0 && start.orientation.x == 0.0 && start.orientation.y == 0 && start.orientation.z == 0.0) {
+        if(start.orientation.w == 0.0 && start.orientation.x == 0.0
+        && start.orientation.y == 0.0 && start.orientation.z == 0.0)
+        {
             leg.p1.orientation = leg.course;
-        } else {
+        }
+        else
+        {
             quaternion2angles(start.orientation, angles);
             leg.p1.orientation = angles[0];
         }
-
-    } else {
+    }
+    else
+    {
         const Leg& last = legs.back();
         leg.p1.x = last.p2.x;
         leg.p1.y = last.p2.y;
@@ -521,29 +556,23 @@ void Controller::addLeg(geometry_msgs::Pose const& pose)
         leg.course = atan2(leg.p2.y - leg.p1.y, leg.p2.x - leg.p1.x);
     }
 
-    leg.backward = fabs(angular_norm(leg.course - leg.p1.orientation)) > M_PI_2;
-    if (pose.orientation.w == 0.0 && pose.orientation.x == 0.0 && pose.orientation.y == 0 && pose.orientation.z == 0.0) {
-        leg.p2.orientation = !leg.backward ? leg.course : angular_norm(leg.course + M_PI);
-    } else {
-//        leg.backward = fabs(angular_norm(leg.course - leg.p1.orientation)) > M_PI_2;
+    leg.backward = fabs(constrainAngle_mpi_pi(leg.course - leg.p1.orientation)) > M_PI_2;
+    if (pose.orientation.w == 0.0 && pose.orientation.x == 0.0 && pose.orientation.y == 0 && pose.orientation.z == 0.0)
+    {
+        leg.p2.orientation = leg.backward ? angular_norm(leg.course + M_PI) : leg.course;
+    }
+    else
+    {
         quaternion2angles(pose.orientation, angles);
         leg.p2.orientation = angles[0];
     }
-    // PM
-    // leg.p2.orientation = angles[0];
-
 
     leg.speed = motion_control_setup.current_speed;
     leg.length2 = (leg.p2.x-leg.p1.x)*(leg.p2.x-leg.p1.x) + (leg.p2.y-leg.p1.y)*(leg.p2.y-leg.p1.y);
     leg.length = sqrt(leg.length2);
-    leg.percent = 0.0;
+    leg.percent = 0.0f;
 
-    //  std::cout << "Leg " << legs.size() << ":" << std::endl;
-    //  std::cout << "  length:    " << leg.length << std::endl;
-    //  std::cout << "  course:    " << (leg.course*180.0/M_PI) << std::endl;
-    //  std::cout << "  direction: " << (leg.backward ? "backward" : "forward") << std::endl;
-
-    if (leg.length2 == 0.0) return;
+    if (leg.length2 == 0.0f) return;
     legs.push_back(leg);
 }
 
@@ -663,21 +692,21 @@ void Controller::update()
         carrot.orientation = legs[carrot_waypoint].p1.orientation + /* carrot_percent * */ 1.0f * angular_norm(legs[carrot_waypoint].p2.orientation - legs[carrot_waypoint].p1.orientation);
     }
 
-    if (carrotPosePublisher) {
+    if (carrotPosePublisher)
+    {
         carrotPose.header = pose.header;
         carrotPose.pose.position.x = carrot.x;
         carrotPose.pose.position.y = carrot.y;
-        double ypr[3] = { carrot.orientation, 0, 0 };
+        double ypr[3] = { carrot.orientation, 0.0, 0.0 };
         angles2quaternion(ypr, carrotPose.pose.orientation);
         carrotPosePublisher.publish(carrotPose);
     }
 
     // calculate steering angle
-    double relative_angle = angular_norm(atan2(carrot.y - pose.pose.position.y, carrot.x - pose.pose.position.x) - angles[0]);
-
     double beta = atan2(carrot.y - pose.pose.position.y, carrot.x - pose.pose.position.x);
+    double relative_angle = angular_norm(beta - angles[0]);
     double orientation_error = angular_norm(-beta + angles[0]); // angular_norm(carrot.orientation - angles[0]);
-    // ROS_INFO("[PD INFO] a  b  b-a  prev = %f  %f  %f  %f", angles[0], beta, angular_norm(angular_norm(-beta + angles[0])), angular_norm(carrot.orientation - angles[0]));
+
     float sign = legs[current].backward ? -1.0 : 1.0;
     float speed = sign * legs[current].speed;
 
@@ -720,11 +749,6 @@ void Controller::update()
             double e_ang = std::min(std::abs(constrainAngle_mpi_pi(a0[0]) - constrainAngle_mpi_pi(a1[0])),
                                     std::abs(constrainAngle_0_2pi(a0[0]) - constrainAngle_0_2pi(a1[0])))
                             / (pose_history_[i].header.stamp - pose_history_[i - 1].header.stamp).toSec();
-
-//            ROS_INFO("ang 0->1 a = %f %f, ang 0->1 b = %f %f",
-//                     constrainAngle_mpi_pi(a0[0]), constrainAngle_mpi_pi(a1[0]),
-//                     constrainAngle_0_2pi(a0[0]), constrainAngle_0_2pi(a1[0])
-//                    );
 
             acc_ang += e_ang;
             acc_lin += e_lin;
@@ -825,21 +849,6 @@ void Controller::update()
         }
     }
 }
-
-void Controller::limitSpeed(float &speed) {
-    float inclination_max_speed = std::max(fabs(speed) * (1.0 - motion_control_setup.current_inclination * motion_control_setup.inclination_speed_reduction_factor), 0.0);
-
-    if (speed > 0.0) {
-        if (speed > motion_control_setup.max_controller_speed_) speed = motion_control_setup.max_controller_speed_;
-        if (speed > inclination_max_speed) speed = inclination_max_speed;
-        if (speed < motion_control_setup.min_speed) speed = motion_control_setup.min_speed;
-    } else if (speed < 0.0) {
-        if (speed < -motion_control_setup.max_controller_speed_) speed = -motion_control_setup.max_controller_speed_;
-        if (speed < -inclination_max_speed) speed = -inclination_max_speed;
-        if (speed > -motion_control_setup.min_speed) speed = -motion_control_setup.min_speed;
-    }
-}
-
 
 void Controller::stop()
 {

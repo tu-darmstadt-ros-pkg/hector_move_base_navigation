@@ -21,7 +21,6 @@
   <!-- Dependencies needed after this package is compiled. -->
   <run_depend>hector_nav_core</run_depend>
   <run_depend>hector_exploration_planner</run_depend>
-
   <!-- Dependencies needed only for running tests. -->
   <!-- <test_depend>hector_nav_core</test_depend> -->
   <!-- <test_depend>hector_exploration_planner</test_depend> -->

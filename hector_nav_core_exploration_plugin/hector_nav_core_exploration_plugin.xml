@@ -1,6 +1,7 @@
 <library path="lib/libhector_nav_core_exploration_plugin">
   <class name="hector_nav_core_exploration_plugin/HectorNavCoreExplorationPlugin" type="hector_nav_core::HectorNavCoreExplorationPlugin" base_class_type="hector_nav_core::ExplorationPlanner">
     <description>
+	No description	
     </description>
   </class>
 </library>

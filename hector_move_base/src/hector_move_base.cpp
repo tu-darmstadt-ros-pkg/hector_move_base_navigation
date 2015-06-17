@@ -423,7 +423,7 @@ void HectorMoveBase::loadDefaultMoveBasePlugins() {
     ROS_INFO("[hector_move_base]: In ActionServer goal callback");
     const hector_move_base_msgs::MoveBaseGoalConstPtr goal = action_server_.acceptNewGoal();
 
-    abortedGoal();
+    clearGoal();
 
     handlerActionGoal newGoal = handlerActionGoal();
     newGoal.goal_id.id = goal_id_counter_++;

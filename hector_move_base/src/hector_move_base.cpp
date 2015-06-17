@@ -142,7 +142,7 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
 //    explore_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionExplore>("explore", 1, boost::bind(&HectorMoveBase::exploreCB, this, _1));
 //    goal_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionGoal>("goal", 1, boost::bind(&HectorMoveBase::goalCB, this, _1));
 //    observation_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionGoal>("observe", 1, boost::bind(&HectorMoveBase::observationCB, this, _1));
-//    simple_goal_sub_ = private_nh_.subscribe<geometry_msgs::PoseStamped>("simple_goal", 1, boost::bind(&HectorMoveBase::simple_goalCB, this, _1));
+    simple_goal_sub_ = private_nh_.subscribe<geometry_msgs::PoseStamped>("simple_goal", 1, boost::bind(&HectorMoveBase::simple_goalCB, this, _1));
 //    cancel_sub_ = private_nh_.subscribe<std_msgs::Empty>("cancel", 1, boost::bind(&HectorMoveBase::cancelCB, this, _1));
     syscommand_sub_ = nh_.subscribe<std_msgs::String>("syscommand", 1, boost::bind(&HectorMoveBase::syscommandCB, this, _1));
 
@@ -385,17 +385,17 @@ void HectorMoveBase::loadDefaultMoveBasePlugins() {
   return;
 }
 
-//void HectorMoveBase::exploreCB(const hector_move_base_msgs::MoveBaseActionExploreConstPtr &goal) {
-//    ROS_DEBUG("[hector_move_base]: In explore callback");
-//    abortedGoal();
-//    handlerActionGoal newGoal = handlerActionGoal();
-//    newGoal.goal_id = goal->goal_id;
-//    newGoal.speed = goal->goal.speed;
-//    newGoal.do_exploration = true;
-//    pushCurrentGoal(newGoal);
-//    setNextState(exploringState_);
-//    return;
-//}
+void HectorMoveBase::exploreCB(const hector_move_base_msgs::MoveBaseActionExploreConstPtr &goal) {
+    ROS_DEBUG("[hector_move_base]: In explore callback");
+    abortedGoal();
+    handlerActionGoal newGoal = handlerActionGoal();
+    newGoal.goal_id = goal->goal_id;
+    newGoal.speed = goal->goal.speed;
+    newGoal.do_exploration = true;
+    pushCurrentGoal(newGoal);
+    setNextState(exploringState_);
+    return;
+}
 
 //void HectorMoveBase::goalCB(const hector_move_base_msgs::MoveBaseActionGoalConstPtr &goal) {
 //  ROS_INFO("GOAL CALLBACK!");
@@ -447,77 +447,77 @@ void HectorMoveBase::loadDefaultMoveBasePlugins() {
     return;
 }
 
-//void HectorMoveBase::observationCB(const hector_move_base_msgs::MoveBaseActionGoalConstPtr &goal) {
-//    ROS_DEBUG("[hector_move_base]: In observation callback");
-//    abortedGoal();
+void HectorMoveBase::observationCB(const hector_move_base_msgs::MoveBaseActionGoalConstPtr &goal) {
+    ROS_DEBUG("[hector_move_base]: In observation callback");
+    abortedGoal();
 
-//    handlerActionGoal newGoal = handlerActionGoal();
-//    newGoal.goal_id = goal->goal_id;
-//    newGoal.speed = goal->goal.speed;
-//    newGoal.do_exploration = false;
-//    newGoal.distance = goal->goal.distance;
+    handlerActionGoal newGoal = handlerActionGoal();
+    newGoal.goal_id = goal->goal_id;
+    newGoal.speed = goal->goal.speed;
+    newGoal.do_exploration = false;
+    newGoal.distance = goal->goal.distance;
 
-//    monstertruck_msgs::SetAlternativeTolerance tolerance_srv;
-//    tolerance_srv.request.goalID = goal->goal_id;
-//    tolerance_srv.request.linearTolerance = observeLinearTolerance_;
-//    tolerance_srv.request.angularTolerance = observeAngularTolerance_;
-//    if (tolerance_client_.call(tolerance_srv)) {
-//        ROS_INFO("[hector_move_base]: called tolerance service successfully");
-//    }
-//    else {
-//        ROS_WARN("[hector_move_base]: calling tolerance service FAILED");
-//    }
+    monstertruck_msgs::SetAlternativeTolerance tolerance_srv;
+    tolerance_srv.request.goalID = goal->goal_id;
+    tolerance_srv.request.linearTolerance = observeLinearTolerance_;
+    tolerance_srv.request.angularTolerance = observeAngularTolerance_;
+    if (tolerance_client_.call(tolerance_srv)) {
+        ROS_INFO("[hector_move_base]: called tolerance service successfully");
+    }
+    else {
+        ROS_WARN("[hector_move_base]: calling tolerance service FAILED");
+    }
 
-//    //make sure goal could be transformed to costmap frame
-//    newGoal.target_pose = goalToGlobalFrame(goal->goal.target_pose);
-//    if (newGoal.target_pose.header.frame_id != costmap_->getGlobalFrameID()) {
-//        ROS_ERROR("[hector_move_base]: tf transformation into global frame failed. goal will be canceled");
-//        //new Goal has to be set in order to publish goal aborted result
-//        pushCurrentGoal(newGoal);
-//        abortedGoal();
-//        return;
-//    }
+    //make sure goal could be transformed to costmap frame
+    newGoal.target_pose = goalToGlobalFrame(goal->goal.target_pose);
+    if (newGoal.target_pose.header.frame_id != costmap_->getGlobalFrameID()) {
+        ROS_ERROR("[hector_move_base]: tf transformation into global frame failed. goal will be canceled");
+        //new Goal has to be set in order to publish goal aborted result
+        pushCurrentGoal(newGoal);
+        abortedGoal();
+        return;
+    }
 
-//    visualization_msgs::Marker marker;
-//    marker.header.frame_id = newGoal.target_pose.header.frame_id;
-//    marker.header.stamp = newGoal.goal_id.stamp;
-//    marker.ns = "hector_move_base";
-//    marker.id = 1;
-//    marker.type = visualization_msgs::Marker::ARROW;
-//    marker.action = visualization_msgs::Marker::ADD;
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = newGoal.target_pose.header.frame_id;
+    marker.header.stamp = newGoal.goal_id.stamp;
+    marker.ns = "hector_move_base";
+    marker.id = 1;
+    marker.type = visualization_msgs::Marker::ARROW;
+    marker.action = visualization_msgs::Marker::ADD;
 
-//    marker.pose = newGoal.target_pose.pose;
+    marker.pose = newGoal.target_pose.pose;
 
-//    marker.scale.x = 0.3;
-//    marker.scale.y = 0.1;
-//    marker.scale.z = 0.1;
+    marker.scale.x = 0.3;
+    marker.scale.y = 0.1;
+    marker.scale.z = 0.1;
 
-//    // Set the color -- be sure to set alpha to something non-zero!
-//    marker.color.r = 0.0f;
-//    marker.color.g = 1.0f;
-//    marker.color.b = 0.0f;
-//    marker.color.a = 0.6;
+    // Set the color -- be sure to set alpha to something non-zero!
+    marker.color.r = 0.0f;
+    marker.color.g = 1.0f;
+    marker.color.b = 0.0f;
+    marker.color.a = 0.6;
 
-//    marker.lifetime = ros::Duration();
-//    goalmarker_pub_.publish(marker);
+    marker.lifetime = ros::Duration();
+    goalmarker_pub_.publish(marker);
 
-//    pushCurrentGoal(newGoal);
-//    setNextState(planningState_);
-//    return;
-//}
+    pushCurrentGoal(newGoal);
+    setNextState(planningState_);
+    return;
+}
 
-//void HectorMoveBase::simple_goalCB(const geometry_msgs::PoseStampedConstPtr &simpleGoal) {
-//    ROS_DEBUG("[hector_move_base]: In simple goal callback");
-//    abortedGoal();
-//    handlerActionGoal newGoal = handlerActionGoal();
-//    newGoal.goal_id.stamp = simpleGoal->header.stamp;
-//    newGoal.goal_id.id = "simple_goal";
-//    newGoal.target_pose = *simpleGoal;
-//    newGoal.do_exploration = false;
-//    pushCurrentGoal(newGoal);
-//    setNextState(planningState_);
-//    return;
-//}
+void HectorMoveBase::simple_goalCB(const geometry_msgs::PoseStampedConstPtr &simpleGoal) {
+    ROS_DEBUG("[hector_move_base]: In simple goal callback");
+    abortedGoal();
+    handlerActionGoal newGoal = handlerActionGoal();
+    newGoal.goal_id.stamp = simpleGoal->header.stamp;
+    newGoal.goal_id.id = "simple_goal";
+    newGoal.target_pose = *simpleGoal;
+    newGoal.do_exploration = false;
+    pushCurrentGoal(newGoal);
+    setNextState(planningState_);
+    return;
+}
 
 void HectorMoveBase::asCancelCB() {
   ROS_INFO("[hector_move_base]: In ActionServer Preempt callback");

@@ -117,11 +117,11 @@ private:
     /**
    * callback methods
    */
-//    void exploreCB(const hector_move_base_msgs::MoveBaseActionExploreConstPtr &goal);
+    void exploreCB(const hector_move_base_msgs::MoveBaseActionExploreConstPtr &goal);
 //    void goalCB(const hector_move_base_msgs::MoveBaseActionGoalConstPtr &goal);
     void asGoalCB();
-//    void observationCB(const hector_move_base_msgs::MoveBaseActionGoalConstPtr &goal);
-//    void simple_goalCB(const geometry_msgs::PoseStampedConstPtr &simpleGoal);
+    void observationCB(const hector_move_base_msgs::MoveBaseActionGoalConstPtr &goal);
+    void simple_goalCB(const geometry_msgs::PoseStampedConstPtr &simpleGoal);
     void cmd_velCB(const ros::MessageEvent<geometry_msgs::Twist> &event);
     void asCancelCB();
 //    void cancelCB(const std_msgs::EmptyConstPtr &empty);

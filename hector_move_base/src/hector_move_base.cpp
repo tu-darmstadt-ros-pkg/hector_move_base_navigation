@@ -246,6 +246,10 @@ void HectorMoveBase::sendActionPath(const hector_move_base_msgs::MoveBaseActionP
     drivepath_pub_.publish(pathToSend);
 }
 
+void HectorMoveBase::setActionServerCanceled() {
+  abortedGoal();
+}
+
 void HectorMoveBase::setNextState(boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> nextState) {
     ROS_DEBUG("[hector_move_base]: setNextState()");
     nextState_ = nextState;

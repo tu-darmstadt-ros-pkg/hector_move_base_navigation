@@ -16,11 +16,13 @@ public:
 
     hector_move_base::RESULT handle(){
         ROS_DEBUG("[publish_abort_handler]: starting publish abort");
-        hector_move_base_msgs::MoveBaseActionResult action_result;
-        action_result.header.stamp = ros::Time::now();
-        action_result.status.goal_id = hectorMoveBaseInterface->getCurrentGoal().goal_id;
-        action_result.status.status = actionlib_msgs::GoalStatus::ABORTED;
-        result_pub_.publish(action_result);
+
+        hectorMoveBaseInterface->setActionServerCanceled();
+//        hector_move_base_msgs::MoveBaseActionResult action_result;
+//        action_result.header.stamp = ros::Time::now();
+//        action_result.status.goal_id = hectorMoveBaseInterface->getCurrentGoal().goal_id;
+//        action_result.status.status = actionlib_msgs::GoalStatus::ABORTED;
+//        result_pub_.publish(action_result);
         return hector_move_base::NEXT;
     }
 

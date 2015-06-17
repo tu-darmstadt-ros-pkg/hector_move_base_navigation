@@ -101,6 +101,7 @@ public:
     hector_move_base_msgs::MoveBaseActionPath getCurrentActionPath();
     void setActionPath (hector_move_base_msgs::MoveBaseActionPath);
     void sendActionPath(const hector_move_base_msgs::MoveBaseActionPath&);
+    void setActionServerCanceled();
 
     void setNextState(boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler>);
 

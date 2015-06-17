@@ -63,6 +63,9 @@ public:
     //send a goal point to the controller
     virtual void sendActionGoal(const handlerActionGoal&) = 0;
 
+    //set Action Server state to canceled
+    virtual void setActionServerCanceled() = 0;
+
     /*
       / PATHS
       */

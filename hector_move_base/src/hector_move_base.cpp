@@ -538,6 +538,10 @@ void HectorMoveBase::syscommandCB(const std_msgs::StringConstPtr &string) {
       abortedGoal();
       setNextState(idleState_);
 
+      if (string->data == "stop") {
+        abortedGoal();
+        setNextState(idleState_);
+
       // reset costmap
 #ifdef LAYERED_COSTMAP_H_
       costmap_->resetLayers();

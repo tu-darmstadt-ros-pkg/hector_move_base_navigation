@@ -44,7 +44,7 @@ public:
   virtual bool makePlan(const geometry_msgs::PoseStamped& start,
                         const geometry_msgs::PoseStamped& goal,
                         std::vector<geometry_msgs::PoseStamped>& plan,
-                        const float& distance);
+                        const float distance);
 
   virtual bool doExploration(const geometry_msgs::PoseStamped &start,
       std::vector<geometry_msgs::PoseStamped> &plan);

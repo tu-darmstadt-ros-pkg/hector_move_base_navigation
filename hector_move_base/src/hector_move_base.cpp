@@ -448,7 +448,7 @@ void HectorMoveBase::exploreCB(const hector_move_base_msgs::MoveBaseActionExplor
 }
 
 void HectorMoveBase::observationCB(const hector_move_base_msgs::MoveBaseActionGoalConstPtr &goal) {
-    ROS_DEBUG("[hector_move_base]: In observation callback");
+    ROS_WARN("[hector_move_base]: In observation callback");
     abortedGoal();
 
     handlerActionGoal newGoal = handlerActionGoal();
@@ -513,6 +513,7 @@ void HectorMoveBase::simple_goalCB(const geometry_msgs::PoseStampedConstPtr &sim
     newGoal.goal_id.stamp = simpleGoal->header.stamp;
     newGoal.goal_id.id = "simple_goal";
     newGoal.target_pose = *simpleGoal;
+    newGoal.distance = 0.0;
     newGoal.do_exploration = false;
     pushCurrentGoal(newGoal);
     setNextState(planningState_);

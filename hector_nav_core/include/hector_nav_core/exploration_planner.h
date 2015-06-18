@@ -21,7 +21,7 @@ namespace hector_nav_core {
       * @return True if a valid plan was found, false otherwise
       */
      virtual bool makePlan(const geometry_msgs::PoseStamped& start,
-         const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan, const float& distance = 0) = 0;
+         const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan, const float distance = 0.0f) = 0;
 
       /**
        * @brief Given a start pose in the world, compute a plan to a frontier

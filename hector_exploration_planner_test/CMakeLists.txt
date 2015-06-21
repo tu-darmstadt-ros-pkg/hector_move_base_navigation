@@ -6,20 +6,19 @@ project(hector_exploration_planner_test)
 # TODO: remove all from COMPONENTS that are not catkin packages.
 find_package(catkin REQUIRED COMPONENTS roscpp hector_exploration_planner)
 
-include_directories(include ${catkin_INCLUDE_DIRS})
-
-add_executable(exploration_planner_test_node src/exploration_planner_test_node.cpp)
-add_executable(pose_with_cov_to_tf_node src/pose_with_cov_to_tf_node.cpp)
-
-target_link_libraries(exploration_planner_test_node ${catkin_LIBRARIES})
-target_link_libraries(pose_with_cov_to_tf_node ${catkin_LIBRARIES})
-
-
-# catkin_package parameters: http://ros.org/doc/groovy/api/catkin/html/dev_guide/generated_cmake_api.html#catkin-package
-# TODO: fill in what other packages will need to use this package
 catkin_package(
     DEPENDS roscpp hector_exploration_planner
     CATKIN_DEPENDS # TODO
     INCLUDE_DIRS # TODO include
     LIBRARIES # TODO
 )
+
+include_directories(include ${catkin_INCLUDE_DIRS})
+
+add_executable(exploration_planner_test_node src/exploration_planner_test_node.cpp)
+add_executable(pose_with_cov_to_tf_node src/pose_with_cov_to_tf_node.cpp)
+     
+target_link_libraries(exploration_planner_test_node ${catkin_LIBRARIES})
+target_link_libraries(pose_with_cov_to_tf_node ${catkin_LIBRARIES})
+
+

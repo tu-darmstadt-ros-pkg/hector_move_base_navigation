@@ -1,0 +1,17 @@
+<package>
+  <name>argo_path_annotator</name>
+  <version>1.0.0</version>
+  <description>
+     argo_path_annotator
+  </description>
+  <maintainer email="schillinger@sim.tu-darmstadt.de">Philipp Schillinger</maintainer>
+  <license>BSD</license>
+
+  <url>http://ros.org/wiki/argo_path_annotator</url>
+  <author>Philipp Schillinger</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>rospy</run_depend>
+
+</package>

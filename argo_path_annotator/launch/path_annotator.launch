@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+
+<launch>
+
+<node name="path_annotator" pkg="argo_path_annotator" type="path_annotator" output="screen" />
+
+</launch>

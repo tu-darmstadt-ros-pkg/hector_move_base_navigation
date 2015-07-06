@@ -133,6 +133,7 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     drivepath_pub_ = controller_nh.advertise<hector_move_base_msgs::MoveBaseActionPath>("path", 0 );
     goalmarker_pub_ = private_nh_.advertise<visualization_msgs::Marker>("goal_marker", 0);
     state_name_pub_ = private_nh_.advertise<std_msgs::String>("state_name", 30);
+    autonomy_level_pub_ = private_nh_.advertise<std_msgs::String>("/autonomy_level", 30);
 
     explore_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionExplore>("explore", 1, boost::bind(&HectorMoveBase::exploreCB, this, _1));
     goal_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionGoal>("goal", 1, boost::bind(&HectorMoveBase::goalCB, this, _1));
@@ -144,6 +145,8 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     controller_result_sub_ = controller_nh.subscribe<hector_move_base_msgs::MoveBaseActionResult>("result", 1, boost::bind(&HectorMoveBase::controllerResultCB, this, _1));
 
     tolerance_client_ = controller_nh.serviceClient<monstertruck_msgs::SetAlternativeTolerance>("set_alternative_tolerances");
+
+    publishAutonomyLevel("autonomous");
 
     //    ROS_DEBUG("[hector_move_base]: going to create new boost thread for main loop");
     //    main_loop_thread_ = new boost::thread(boost::bind(&HectorMoveBase::moveBaseLoop, this, nh, controllerFrequency));
@@ -373,6 +376,7 @@ void HectorMoveBase::loadDefaultMoveBasePlugins(){
 }
 
 void HectorMoveBase::exploreCB(const hector_move_base_msgs::MoveBaseActionExplore::ConstPtr& goal){
+    publishAutonomyLevel("autonomous");
     ROS_DEBUG("[hector_move_base]: In explore callback");
     abortedGoal();
     handlerActionGoal newGoal = handlerActionGoal();
@@ -385,6 +389,7 @@ void HectorMoveBase::exploreCB(const hector_move_base_msgs::MoveBaseActionExplor
 }
 
 void HectorMoveBase::goalCB(const hector_move_base_msgs::MoveBaseActionGoal::ConstPtr& goal){
+    publishAutonomyLevel("autonomous");
     ROS_DEBUG("[hector_move_base]: In goal callback");
     abortedGoal();
 
@@ -408,6 +413,7 @@ void HectorMoveBase::goalCB(const hector_move_base_msgs::MoveBaseActionGoal::Con
 }
 
 void HectorMoveBase::observationCB(const hector_move_base_msgs::MoveBaseActionGoal::ConstPtr& goal){
+    publishAutonomyLevel("autonomous");
     ROS_DEBUG("[hector_move_base]: In observation callback");
     abortedGoal();
 
@@ -467,6 +473,7 @@ void HectorMoveBase::observationCB(const hector_move_base_msgs::MoveBaseActionGo
 }
 
 void HectorMoveBase::simple_goalCB(const geometry_msgs::PoseStamped::ConstPtr& simpleGoal){
+    publishAutonomyLevel("teleop");
     ROS_DEBUG("[hector_move_base]: In simple goal callback");
     abortedGoal();
     handlerActionGoal newGoal = handlerActionGoal();
@@ -647,6 +654,13 @@ void HectorMoveBase::moveBaseStep() {
         return;
     }
 
+}
+
+void HectorMoveBase::publishAutonomyLevel(const std::string autonomy_level_string)
+{
+  std_msgs::String autonomy_level;
+  autonomy_level.data = autonomy_level_string;
+  autonomy_level_pub_.publish(autonomy_level);
 }
 
 void HectorMoveBase::abortedGoal() {

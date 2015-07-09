@@ -42,7 +42,7 @@ namespace hector_move_base {
  */
 class HectorMoveBase : public IHectorMoveBase {
 
-  private:
+ private:
   costmap_2d::Costmap2DROS* costmap_;
   ros::NodeHandle private_nh_;
   boost::shared_ptr<HectorMoveBaseStateMachine> statemachine_;
@@ -65,10 +65,12 @@ class HectorMoveBase : public IHectorMoveBase {
   ros::ServiceClient tolerance_client_;
   pluginlib::ClassLoader<nav_core::RecoveryBehavior> move_base_plugin_loader_;
   std::vector<boost::shared_ptr<nav_core::RecoveryBehavior> > move_base_plugins_;
+  ros::Duration observe_time_limit_;
+  std::pair<actionlib_msgs::GoalID, ros::Time> last_observe_cb_;
 
   boost::recursive_mutex currentStatMutex_;
 
-  public:
+ public:
   /**
    * @brief  Constructor for the actions
    * @param name The name of the action
@@ -100,7 +102,7 @@ class HectorMoveBase : public IHectorMoveBase {
 
   void moveBaseStep();
 
-  private:
+ private:
   bool loadMoveBasePlugins(ros::NodeHandle node);
   void loadDefaultMoveBasePlugins();
 
@@ -125,6 +127,7 @@ class HectorMoveBase : public IHectorMoveBase {
   void clearGoal();
   geometry_msgs::PoseStamped goalToGlobalFrame(const geometry_msgs::PoseStamped&);
   bool isGoalIDEqual(const actionlib_msgs::GoalID&,const actionlib_msgs::GoalID&);
+  bool isObserveStuck();
   void ensureActionPathValid(hector_move_base_msgs::MoveBaseActionPath &path, bool warn_user=true);
 };
 }

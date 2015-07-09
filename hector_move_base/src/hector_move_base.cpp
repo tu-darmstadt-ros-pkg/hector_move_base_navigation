@@ -24,6 +24,9 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
   private_nh_.param("use_alternate_planner", use_alternate_planner_, true);
   private_nh_.param("observe_linear_tolerance", observeLinearTolerance_, 0.2);
   private_nh_.param("observe_angular_tolerance", observeAngularTolerance_, M_PI_2);
+  double observe_time_limit;
+  private_nh_.param("observe_time_limit", observe_time_limit, 10.0);
+  observe_time_limit_ = ros::Duration(observe_time_limit);
 
   costmap_ = new costmap_2d::Costmap2DROS("global_costmap", tf_);
   ROS_DEBUG("[hector_move_base]: costmap loaded");
@@ -220,6 +223,7 @@ void HectorMoveBase::sendActionGoal(const handlerActionGoal& goalToSend) {
   targetPose.pose = goalToSend.target_pose.pose;
   pathToSend.goal.target_path.poses.push_back(targetPose);
 
+  ensureActionPathValid(pathToSend);
   drivepath_pub_.publish(pathToSend);
 }
 
@@ -466,6 +470,8 @@ void HectorMoveBase::observationCB(const hector_move_base_msgs::MoveBaseActionGo
 
   pushCurrentGoal(newGoal);
   setNextState(planningState_);
+  last_observe_cb_.first = newGoal.goal_id;
+  last_observe_cb_.second = ros::Time::now();
   return;
 }
 
@@ -641,6 +647,13 @@ void HectorMoveBase::moveBaseStep() {
     ROS_DEBUG("[hector_move_base]: nextState_ was set, ignoring statemachine mapping");
     return;
   }
+
+  if (isObserveStuck()) {
+    ROS_WARN("Observe Stuck detected. Aborting current goal. Waiting for new goal.");
+    abortedGoal();
+    return;
+  }
+
   switch (result) {
     case WAIT:
       ROS_DEBUG("[hector_move_base]: result is WAIT, currentState_ will be kept");
@@ -653,6 +666,15 @@ void HectorMoveBase::moveBaseStep() {
       return;
   }
 
+}
+
+bool HectorMoveBase::isObserveStuck() {
+  if (isGoalIDEqual(last_observe_cb_.first, getCurrentGoal().goal_id)) {
+    if (observe_time_limit_ < (ros::Time::now() - last_observe_cb_.second) ) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void HectorMoveBase::publishAutonomyLevel(const std::string autonomy_level_string)

@@ -150,6 +150,8 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
   tolerance_client_ = controller_nh.serviceClient<monstertruck_msgs::SetAlternativeTolerance>("set_alternative_tolerances");
 
   publishAutonomyLevel("autonomous");
+  last_observe_cb_.first = actionlib_msgs::GoalID();
+  last_observe_cb_.second = ros::Time(0);
 
   //    ROS_DEBUG("[hector_move_base]: going to create new boost thread for main loop");
   //    main_loop_thread_ = new boost::thread(boost::bind(&HectorMoveBase::moveBaseLoop, this, nh, controllerFrequency));

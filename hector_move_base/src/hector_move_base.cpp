@@ -228,15 +228,12 @@ hector_move_base_msgs::MoveBaseActionPath HectorMoveBase::getCurrentActionPath()
 }
 
 void HectorMoveBase::setActionPath (hector_move_base_msgs::MoveBaseActionPath path) {
-    if (path.goal.target_path.header.frame_id.empty()) {
-        path.goal.target_path.header.frame_id = costmap_->getGlobalFrameID();
-        ROS_WARN("[hector_move_base]: planner returned a path with empty frame_id. Assuming %s frame.", path.goal.target_path.header.frame_id.c_str());
-    }
-
+    ensureActionPathValid(path);
     path_ = path;
 }
 
-void HectorMoveBase::sendActionPath(const hector_move_base_msgs::MoveBaseActionPath& pathToSend) {
+void HectorMoveBase::sendActionPath(hector_move_base_msgs::MoveBaseActionPath& pathToSend) {
+    ensureActionPathValid(pathToSend);
     drivepath_pub_.publish(pathToSend);
 }
 
@@ -414,7 +411,7 @@ void HectorMoveBase::goalCB(const hector_move_base_msgs::MoveBaseActionGoal::Con
 
 void HectorMoveBase::observationCB(const hector_move_base_msgs::MoveBaseActionGoal::ConstPtr& goal){
     publishAutonomyLevel("autonomous");
-    ROS_DEBUG("[hector_move_base]: In observation callback");
+    ROS_INFO("[hector_move_base]: In observation callback");
     abortedGoal();
 
     handlerActionGoal newGoal = handlerActionGoal();
@@ -505,6 +502,11 @@ void HectorMoveBase::syscommandCB(const std_msgs::String::ConstPtr& string){
 #endif // LAYERED_COSTMAP_H_
     }
 
+    if (string->data == "stop") {
+      abortedGoal();
+      setNextState(idleState_);
+    }
+
     if (string->data == "explore")
     {
       abortedGoal();
@@ -587,7 +589,7 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
         }
         // if result id equals current goal but not global goal
         if (isGoalIDEqual(current_action_path.goal_id, result->status.goal_id)) {
-            ROS_DEBUG("[hector_move_base]: number of goals: %i", goals_.size());
+            ROS_DEBUG("[hector_move_base]: number of goals: %lu", goals_.size());
             double diff_x = fabs(current_action_path.goal.target_path.poses.back().pose.position.x - global_goal.target_pose.pose.position.x);
             double diff_y = fabs(current_action_path.goal.target_path.poses.back().pose.position.y - global_goal.target_pose.pose.position.y);
             if ((pow(diff_x, 2) + pow(diff_y, 2)) < pow(goalReachedRadius_, 2)) {
@@ -625,8 +627,7 @@ void HectorMoveBase::moveBaseLoop(ros::NodeHandle& nh, ros::Rate rate) {
     }
 }
 
-void HectorMoveBase::publishStateName(boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> state)
-{
+void HectorMoveBase::publishStateName(boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> state) {
     std_msgs::String msg;
     msg.data = typeid(*state.get()).name();
     state_name_pub_.publish(msg);
@@ -634,15 +635,13 @@ void HectorMoveBase::publishStateName(boost::shared_ptr<hector_move_base_handler
 
 void HectorMoveBase::moveBaseStep() {
     RESULT result = currentState_->handle();
-    if (currentState_ != nextState_)
-    {
+    if (currentState_ != nextState_) {
         currentState_ = nextState_;
         publishStateName(currentState_);
         ROS_DEBUG("[hector_move_base]: nextState_ was set, ignoring statemachine mapping");
         return;
     }
-    switch (result)
-    {
+    switch (result) {
     case WAIT:
         ROS_DEBUG("[hector_move_base]: result is WAIT, currentState_ will be kept");
         return;
@@ -701,6 +700,8 @@ void HectorMoveBase::clearGoal() {
     hector_move_base_msgs::MoveBaseActionPath empty_path = hector_move_base_msgs::MoveBaseActionPath();
     empty_path.header.frame_id = costmap_->getGlobalFrameID();
     empty_path.goal_id.id = "empty_path";
+    empty_path.goal_id.stamp = ros::Time::now();
+    ensureActionPathValid(empty_path, false);
     sendActionPath(empty_path);
     setNextState(idleState_);
 }
@@ -733,6 +734,36 @@ geometry_msgs::PoseStamped HectorMoveBase::goalToGlobalFrame(const geometry_msgs
 
 bool HectorMoveBase::isGoalIDEqual(const actionlib_msgs::GoalID& firstGoalID, const actionlib_msgs::GoalID& secondGoalID) {
     return ((firstGoalID.stamp == secondGoalID.stamp) && (firstGoalID.id == secondGoalID.id));
+}
+
+void HectorMoveBase::ensureActionPathValid(hector_move_base_msgs::MoveBaseActionPath &path, bool warn_user) {
+  if (path.header.frame_id.empty()) {
+    path.header.frame_id = costmap_->getGlobalFrameID();
+    if (warn_user)
+      ROS_WARN("[hector_move_base]: action path with empty frame_id. Assuming %s frame.", path.header.frame_id.c_str());
+  }
+  if (!path.header.stamp.isValid()) {
+    path.header.stamp = ros::Time::now();
+    if (warn_user)
+      ROS_WARN("[hector_move_base]: action path with zero time stamp. Setting current time.");
+  }
+
+  if (path.goal.target_path.header.frame_id.empty()) {
+    path.goal.target_path.header.frame_id = costmap_->getGlobalFrameID();
+    if (warn_user)
+      ROS_WARN("[hector_move_base]: planner returned a path with empty frame_id. Assuming %s frame.", path.goal.target_path.header.frame_id.c_str());
+  }
+  if (!path.goal.target_path.header.stamp.isValid()) {
+    path.goal.target_path.header.stamp = ros::Time::now();
+    if (warn_user)
+      ROS_WARN("[hector_move_base]: path with zero time stamp. Setting current time.");
+  }
+
+  if (path.goal_id.stamp.isValid()) {
+    path.goal_id.stamp = ros::Time::now();
+    if (warn_user)
+      ROS_WARN("[hector_move_base]: goal_id with zero time stamp. Setting current time.");
+  }
 }
 }
 

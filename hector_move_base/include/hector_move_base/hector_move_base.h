@@ -89,7 +89,7 @@ public:
 
     hector_move_base_msgs::MoveBaseActionPath getCurrentActionPath();
     void setActionPath (hector_move_base_msgs::MoveBaseActionPath);
-    void sendActionPath(const hector_move_base_msgs::MoveBaseActionPath&);
+    void sendActionPath(hector_move_base_msgs::MoveBaseActionPath&);
 
     void setNextState(boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler>);
     void publishStateName(boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> state);
@@ -125,6 +125,7 @@ private:
     void clearGoal();
     geometry_msgs::PoseStamped goalToGlobalFrame(const geometry_msgs::PoseStamped&);
     bool isGoalIDEqual(const actionlib_msgs::GoalID&,const actionlib_msgs::GoalID&);
+    void ensureActionPathValid(hector_move_base_msgs::MoveBaseActionPath &path, bool warn_user=true);
 };
 }
 #endif

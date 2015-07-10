@@ -70,7 +70,7 @@ public:
     virtual void setActionPath (hector_move_base_msgs::MoveBaseActionPath) = 0;
 
     //send a path to the controller
-    virtual void sendActionPath(const hector_move_base_msgs::MoveBaseActionPath&) = 0;
+    virtual void sendActionPath(hector_move_base_msgs::MoveBaseActionPath&) = 0;
 
     /*
       / MOVE_BASE SEQUENCE MANIPULATION

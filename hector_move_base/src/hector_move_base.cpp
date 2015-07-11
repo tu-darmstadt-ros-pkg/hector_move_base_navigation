@@ -683,11 +683,13 @@ void HectorMoveBase::moveBaseStep() {
     return;
   }
 
+  /*
   if (isObserveStuck()) {
     ROS_WARN("Observe Stuck detected. Aborting current goal. Waiting for new goal.");
     abortedGoal();
     return;
   }
+  */
 
   switch (result) {
     

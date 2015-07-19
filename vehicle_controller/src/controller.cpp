@@ -15,10 +15,7 @@
 
 #include <algorithm>
 #include <sstream>
-
 #include <functional>
-
-// #define END_TWIST
 
 double constrainAngle_0_2pi(double x)
 {

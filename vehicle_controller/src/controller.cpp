@@ -7,6 +7,7 @@
 
 #include <geometry_msgs/PointStamped.h>
 #include <std_msgs/Float32.h>
+#include <std_msgs/String.h>
 
 #include <hector_move_base_msgs/move_base_action.h>
 #include <vehicle_controller/four_wheel_steer_controller.h>
@@ -385,7 +386,7 @@ bool Controller::drivepath(const nav_msgs::Path& path)
 
     state = DRIVEPATH;
     //@TODO The below crashed when a path with only one entry has been received. See check on top of this function.
-    ROS_INFO("Received new path to goal point (x = %.2f, y = %.2f)", legs.back().p2.x, legs.back().p2.y);
+    ROS_INFO("[vehicle_controller] Received new path to goal point (x = %.2f, y = %.2f)", legs.back().p2.x, legs.back().p2.y);
     publishActionResult(actionlib_msgs::GoalStatus::ACTIVE);
     return true;
 }

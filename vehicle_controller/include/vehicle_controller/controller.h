@@ -20,7 +20,6 @@
 
 #include <vehicle_controller/vehicle_control_interface.h>
 #include <vehicle_controller/motion_parameters.h>
-
 #include <vehicle_controller/ps3d.h>
 
 class Controller {
@@ -50,10 +49,6 @@ public:
 
   friend int main(int, char**);
 
-  bool pathToBeSmoothed(const std::deque<geometry_msgs::Pose> &transformed_path);
-  bool createDrivepath2MapTransform(tf::StampedTransform  & transform, const nav_msgs::Path& path);
-  geometry_msgs::Pose createPoseFromQuatAndPosition(vec3 const & position, quat const & orientation);
-
 protected:
   virtual bool configure();
   virtual void update();
@@ -79,6 +74,10 @@ protected:
 
   void addLeg(geometry_msgs::Pose const&);
   void setDriveCommand(float speed, float kappa, float tan_gamma);
+
+  bool pathToBeSmoothed(const std::deque<geometry_msgs::Pose> &transformed_path);
+  bool createDrivepath2MapTransform(tf::StampedTransform  & transform, const nav_msgs::Path& path);
+  geometry_msgs::Pose createPoseFromQuatAndPosition(vec3 const & position, quat const & orientation);
 
 private:
   ros::NodeHandle nh;

@@ -1,6 +1,7 @@
 #include <hector_move_base/hector_move_base.h>
 
-namespace hector_move_base {
+namespace hector_move_base
+{
 
 HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
   costmap_(NULL),

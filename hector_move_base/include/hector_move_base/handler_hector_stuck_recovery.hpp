@@ -23,6 +23,8 @@ private:
     ros::ServiceClient inverse_trajectory_service_client_;
     ros::Publisher path_pub_;
     ros::Publisher inv_traj_back_pose_pub_;
+    ros::Publisher cmd_flipper_toggle_pub_;
+
     ros::Subscriber path_drive_feedback_sub_;
 
     hector_move_base_msgs::MoveBaseActionGeneric target_path_goal_;
@@ -44,6 +46,7 @@ public:
 
         inverse_trajectory_service_client_ = nh.serviceClient<hector_nav_msgs::GetRecoveryInfo>("trajectory_recovery_info");
         inv_traj_back_pose_pub_ = nh.advertise<geometry_msgs::PoseStamped>("inv_traj_back_pose",1);
+        cmd_flipper_toggle_pub_ = nh.advertise<std_msgs::Empty>("cmd_flipper_toggle", 1);
 
         ros::NodeHandle controller_nh("controller");
         path_pub_ = controller_nh.advertise<hector_move_base_msgs::MoveBaseActionGeneric>("generic",1);
@@ -54,9 +57,14 @@ public:
         counter = 0;
     }
 
-    hector_move_base::RESULT handle(){
 
-        ROS_INFO("Running inverse trajectory recovery");
+    hector_move_base::RESULT handle()
+    {
+        ROS_INFO("[hector_move_base] Stuck recovery handler");
+        ROS_INFO("                   Toggling flipper state");
+        cmd_flipper_toggle_pub_.publish(std_msgs::Empty());
+
+        ROS_INFO("                   Running inverse trajectory recovery");
 
         if (counter > 4) {
             reset();

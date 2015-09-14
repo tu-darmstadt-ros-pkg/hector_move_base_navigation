@@ -83,7 +83,7 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     if(use_exploring_)
         mappingForPublishFeedback.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, waitForReplanningState_));
     else
-        mappingForPublishFeedback.insert(std::make_pair(NEXT, idleState_));
+        mappingForPublishFeedback.insert(std::make_pair(NEXT, waitForReplanningState_));
     statemachine_->addHandlerMapping(publishFeedbackState_, mappingForPublishFeedback);
 
     std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForWaitForReplanning;

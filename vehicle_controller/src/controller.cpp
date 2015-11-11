@@ -64,7 +64,7 @@ Controller::Controller(const std::string& ns)
     camera_lookat_distance = 1.0;
     camera_lookat_height = -0.2;
 
-    check_if_blocked = true;
+    check_stuck = true;
     velocity_blocked_time = 5.0;
     linear_speed_blocked_ = 0.05;
     angular_speed_blocked_ = 0.05;
@@ -98,7 +98,7 @@ bool Controller::configure()
     params.getParam("camera_control", camera_control);
     params.getParam("camera_lookat_distance", camera_lookat_distance);
     params.getParam("camera_lookat_height", camera_lookat_height);
-    params.getParam("check_if_blocked", check_if_blocked);
+    params.getParam("check_stuck", check_stuck);
     params.getParam("velocity_blocked_time", velocity_blocked_time);
     params.getParam("linear_speed_blocked", linear_speed_blocked_);
     params.getParam("angular_speed_blocked", angular_speed_blocked_);
@@ -569,8 +569,8 @@ void Controller::addLeg(geometry_msgs::Pose const& pose)
     }
 
     leg.speed = motion_control_setup.DESIRED_SPEED_;
-    leg.length2 = (leg.p2.x-leg.p1.x)*(leg.p2.x-leg.p1.x) + (leg.p2.y-leg.p1.y)*(leg.p2.y-leg.p1.y);
-    leg.length = sqrt(leg.length2);
+    leg.length2 = std::pow(leg.p2.x - leg.p1.x, 2) + std::pow(leg.p2.y - leg.p1.y, 2);
+    leg.length = std::sqrt(leg.length2);
     leg.percent = 0.0f;
 
     if (leg.length2 == 0.0f) return;
@@ -696,13 +696,13 @@ void Controller::update()
         carrot.orientation = legs[carrot_waypoint].p1.orientation + /* carrot_percent * */ 1.0f * angularNorm(legs[carrot_waypoint].p2.orientation - legs[carrot_waypoint].p1.orientation);
     }
 
+    carrotPose.header = pose.header;
+    carrotPose.pose.position.x = carrot.x;
+    carrotPose.pose.position.y = carrot.y;
+    double ypr[3] = { carrot.orientation, 0.0, 0.0 };
+    angles2quaternion(ypr, carrotPose.pose.orientation);
     if (carrotPosePublisher)
     {
-        carrotPose.header = pose.header;
-        carrotPose.pose.position.x = carrot.x;
-        carrotPose.pose.position.y = carrot.y;
-        double ypr[3] = { carrot.orientation, 0.0, 0.0 };
-        angles2quaternion(ypr, carrotPose.pose.orientation);
         carrotPosePublisher.publish(carrotPose);
     }
 
@@ -731,7 +731,7 @@ void Controller::update()
 
 
     // check if vehicle is blocked
-    if (check_if_blocked && dt > 0.0 && pose_history_.size() >= POSE_HISTORY_SIZE)
+    if (check_stuck && dt > 0.0 && pose_history_.size() >= POSE_HISTORY_SIZE)
     // @ TODO : PM suggest change td > 0.0 to !isDtInvalid()
     {
         double acc_lin = 0.0;

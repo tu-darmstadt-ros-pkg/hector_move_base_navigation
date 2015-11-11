@@ -131,7 +131,7 @@ private:
   double camera_lookat_height;
   geometry_msgs::QuaternionStamped cameraDefaultOrientation;
 
-  bool check_if_blocked;
+  bool check_stuck;
   double dt;
   //double current_velocity;
   //double current_inclination;

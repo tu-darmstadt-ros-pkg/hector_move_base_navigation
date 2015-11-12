@@ -121,7 +121,7 @@ private:
   Legs legs;
 
   // parameters
-  MotionParameters motion_control_setup;
+  MotionParameters mp_;
 
   std::string map_frame_id;
   std::string base_frame_id;

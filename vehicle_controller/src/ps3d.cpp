@@ -1,7 +1,8 @@
 #include <vehicle_controller/ps3d.h>
+#include <vehicle_controller/quaternions.h>
+
 #include <iostream>
 
-#include "quaternions.h"
 #include <ros/ros.h>
 
 using std::vector;
@@ -68,10 +69,6 @@ void Pathsmoother3D::smooth(deque_vec3 const & in_path,
             bool endC = end_path_projection > 0;
 
             reverse = distC && startC && endC;
-
-            std::cout << "spd = " << start_path_delta.transpose() << " | " << "(spd,start_vec) = " << start_path_projection << std::endl;
-            std::cout << "epd = " << end_path_delta.transpose() << " | " << "(epd,end_vec) = " << end_path_projection << std::endl;
-            std::cout << "end_vec = " << end_vec.transpose() << std::endl;
 
             if(reverse)
                 ROS_INFO("REVERSE! dist = %d, start = %d, end = %d", distC, startC, endC);

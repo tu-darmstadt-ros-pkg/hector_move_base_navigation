@@ -1,9 +1,10 @@
 #include <vehicle_controller/controller.h>
+#include <vehicle_controller/quaternions.h>
+#include <vehicle_controller/utility.h>
+
 #include <ros/ros.h>
 #include <tf/transform_datatypes.h>
 #include <limits>
-
-#include "quaternions.h"
 
 #include <geometry_msgs/PointStamped.h>
 #include <std_msgs/Float32.h>
@@ -17,46 +18,17 @@
 #include <sstream>
 #include <functional>
 
-double constrainAngle_0_2pi(double x)
-{
-    x = fmod(x, 2.0 * M_PI);
-    if (x < 0)
-        x += 2.0 * M_PI;
-    return x;
-}
-
-double constrainAngle_mpi_pi(double x)
-{
-    x = fmod(x + M_PI, 2.0 * M_PI);
-    if (x < 0)
-        x += 2.0 * M_PI;
-    return x - M_PI;
-}
-
-static double angularNorm(double diff)
-{
-    static const double M_2PI = 2.0 * M_PI;
-    diff -= floor(diff/M_2PI + .5)*M_2PI;
-    return diff;
-}
-
-float euclideanDistance(geometry_msgs::Point const & p0, geometry_msgs::Point const & p1)
-{
-  return std::sqrt(std::pow(p1.x - p0.x, 2) + std::pow(p1.y - p0.y, 2) + std::pow(p1.z - p0.z, 2));
-}
-
 Controller::Controller(const std::string& ns)
-    : nh(ns)
-    , state(INACTIVE)
+    : nh(ns), state(INACTIVE)
 {
-    motion_control_setup.carrot_distance = 1.0;
-    motion_control_setup.min_speed = 0.1;
-    motion_control_setup.max_controller_speed_ = 0.25;
-    motion_control_setup.max_unlimited_speed_ = 2.0;
-    motion_control_setup.max_unlimited_angular_rate_ = 1.0;
-    motion_control_setup.max_controller_angular_rate_ =  0.4;
-    motion_control_setup.inclination_speed_reduction_factor = 0.5 / (30 * M_PI/180.0); // 0.5 per 30 degrees
-    motion_control_setup.inclination_speed_reduction_time_constant = 0.3;
+    mp_.carrot_distance = 1.0;
+    mp_.min_speed = 0.1;
+    mp_.max_controller_speed_ = 0.25;
+    mp_.max_unlimited_speed_ = 2.0;
+    mp_.max_unlimited_angular_rate_ = 1.0;
+    mp_.max_controller_angular_rate_ =  0.4;
+    mp_.inclination_speed_reduction_factor = 0.5 / (30 * M_PI/180.0); // 0.5 per 30 degrees
+    mp_.inclination_speed_reduction_time_constant = 0.3;
     map_frame_id = "nav";
     base_frame_id = "base_link";
 
@@ -69,8 +41,8 @@ Controller::Controller(const std::string& ns)
     linear_speed_blocked_ = 0.05;
     angular_speed_blocked_ = 0.05;
 
-    motion_control_setup.current_velocity = 0.0;
-    motion_control_setup.current_inclination = 0.0;
+    mp_.current_velocity = 0.0;
+    mp_.current_inclination = 0.0;
     velocity_error = 0.0;
 
     goal_position_tolerance = 0.0;
@@ -91,8 +63,8 @@ Controller::~Controller()
 bool Controller::configure()
 {
     ros::NodeHandle params("~");
-    params.getParam("carrot_distance", motion_control_setup.carrot_distance);
-    params.getParam("min_speed", motion_control_setup.min_speed);
+    params.getParam("carrot_distance", mp_.carrot_distance);
+    params.getParam("min_speed", mp_.min_speed);
     params.getParam("frame_id", map_frame_id);
     params.getParam("base_frame_id", base_frame_id);
     params.getParam("camera_control", camera_control);
@@ -102,8 +74,8 @@ bool Controller::configure()
     params.getParam("velocity_blocked_time", velocity_blocked_time);
     params.getParam("linear_speed_blocked", linear_speed_blocked_);
     params.getParam("angular_speed_blocked", angular_speed_blocked_);
-    params.getParam("inclination_speed_reduction_factor", motion_control_setup.inclination_speed_reduction_factor);
-    params.getParam("inclination_speed_reduction_time_constant", motion_control_setup.inclination_speed_reduction_time_constant);
+    params.getParam("inclination_speed_reduction_factor", mp_.inclination_speed_reduction_factor);
+    params.getParam("inclination_speed_reduction_time_constant", mp_.inclination_speed_reduction_time_constant);
     params.getParam("goal_position_tolerance", goal_position_tolerance);
     params.getParam("goal_angle_tolerance", goal_angle_tolerance);
     params.getParam("vehicle_type", vehicle_type);
@@ -119,11 +91,9 @@ bool Controller::configure()
     {
         this->vehicle_control_interface_.reset(new FourWheelSteerController());
     }
+    this->vehicle_control_interface_->configure(params, &mp_);
 
-    this->vehicle_control_interface_->configure(params, &motion_control_setup);
-
-
-    ROS_INFO("Loaded %s as low level vehicle motion controller", this->vehicle_control_interface_->getName().c_str());
+    ROS_INFO("[vehicle_controller] Low level vehicle motion controller is %s", this->vehicle_control_interface_->getName().c_str());
 
     stateSubscriber     = nh.subscribe("state", 10, &Controller::stateCallback, this);
     drivetoSubscriber   = nh.subscribe("driveto", 10, &Controller::drivetoCallback, this);
@@ -188,12 +158,12 @@ void Controller::stateCallback(const nav_msgs::Odometry& state)
         return;
     }
 
-    motion_control_setup.current_velocity = this->velocity.vector.x;
+    mp_.current_velocity = this->velocity.vector.x;
     double inclination = acos(this->pose.pose.orientation.w*this->pose.pose.orientation.w - this->pose.pose.orientation.x*this->pose.pose.orientation.x - this->pose.pose.orientation.y*this->pose.pose.orientation.y + this->pose.pose.orientation.z*this->pose.pose.orientation.z);
-    if (inclination >= motion_control_setup.current_inclination)
-        motion_control_setup.current_inclination = inclination;
+    if (inclination >= mp_.current_inclination)
+        mp_.current_inclination = inclination;
     else
-        motion_control_setup.current_inclination = (motion_control_setup.inclination_speed_reduction_time_constant * motion_control_setup.current_inclination + dt * inclination) / (motion_control_setup.inclination_speed_reduction_time_constant + dt);
+        mp_.current_inclination = (mp_.inclination_speed_reduction_time_constant * mp_.current_inclination + dt * inclination) / (mp_.inclination_speed_reduction_time_constant + dt);
 
     update();
 }
@@ -460,7 +430,7 @@ void Controller::cmd_velTeleopCallback(const geometry_msgs::Twist& velocity)
 
 void Controller::speedCallback(const std_msgs::Float32& speed)
 {
-    motion_control_setup.max_controller_speed_ = speed.data;
+    mp_.max_controller_speed_ = speed.data;
 }
 
 bool Controller::alternativeTolerancesService(monstertruck_msgs::SetAlternativeTolerance::Request& req,
@@ -568,7 +538,7 @@ void Controller::addLeg(geometry_msgs::Pose const& pose)
         leg.p2.orientation = angles[0];
     }
 
-    leg.speed = motion_control_setup.DESIRED_SPEED_;
+    leg.speed = mp_.DESIRED_SPEED_;
     leg.length2 = std::pow(leg.p2.x - leg.p1.x, 2) + std::pow(leg.p2.y - leg.p1.y, 2);
     leg.length = std::sqrt(leg.length2);
     leg.percent = 0.0f;
@@ -624,9 +594,9 @@ void Controller::update()
             goal_angle_error_ = constrainAngle_mpi_pi(goal_angle_error_);
             ROS_INFO("[vehicle_controller] Reached goal point position. angle error = %f, tol = %f", goal_angle_error_ * 180.0 / M_PI,
                      angular_tolerance_for_current_path * 180.0 / M_PI);
-            if(final_twist_trials > motion_control_setup.FINAL_TWIST_TRIALS_MAX_
+            if(final_twist_trials > mp_.FINAL_TWIST_TRIALS_MAX_
             || vehicle_control_interface_->hasReachedFinalOrientation(goal_angle_error_, angular_tolerance_for_current_path)
-            || !motion_control_setup.USE_FINAL_TWIST_)
+            || !mp_.USE_FINAL_TWIST_)
             {
                 state = INACTIVE;
                 ROS_INFO("[vehicle_controller] Reached goal point orientation! error = %f, tol = %f", goal_angle_error_ * 180.0 / M_PI, angular_tolerance_for_current_path * 180.0 / M_PI);
@@ -640,7 +610,7 @@ void Controller::update()
                 final_twist_trials++;
                 ROS_INFO("[vehicle_controller] Performing final twist.");
                 this->vehicle_control_interface_->executeMotionCommand(goal_angle_error_, goal_angle_error_,
-                                                                       motion_control_setup.carrot_distance,
+                                                                       mp_.carrot_distance,
                                                                        0.0, 0.0, dt);
                 return;
             }
@@ -660,7 +630,7 @@ void Controller::update()
     Point carrot;
     unsigned int carrot_waypoint = current;
     float carrot_percent = legs[current].percent;
-    float carrot_remaining = motion_control_setup.carrot_distance;
+    float carrot_remaining = mp_.carrot_distance;
 
     while(carrot_waypoint < legs.size())
     {
@@ -714,7 +684,7 @@ void Controller::update()
     double speed = sign * legs[current].speed;
 
     double signed_carrot_distance_2_robot = sign * euclideanDistance(carrotPose.pose.position, pose.pose.position);
-    this->vehicle_control_interface_->executeMotionCommand(relative_angle, orientation_error, motion_control_setup.carrot_distance,
+    this->vehicle_control_interface_->executeMotionCommand(relative_angle, orientation_error, mp_.carrot_distance,
                                                            speed, signed_carrot_distance_2_robot, dt);
 
 
@@ -856,7 +826,8 @@ void Controller::stop()
 {
     this->vehicle_control_interface_->stop();
     drivepathPublisher.publish(empty_path);
-    if (camera_control) cameraOrientationPublisher.publish(cameraDefaultOrientation);
+    if (camera_control)
+        cameraOrientationPublisher.publish(cameraDefaultOrientation);
 }
 
 void Controller::cleanup()
@@ -874,7 +845,6 @@ int main(int argc, char **argv)
         ros::spin();
     }
     c.cleanup();
-
     ros::shutdown();
     return 0;
 }

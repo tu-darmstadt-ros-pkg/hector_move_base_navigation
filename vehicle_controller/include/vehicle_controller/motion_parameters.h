@@ -23,7 +23,6 @@
     ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 */
 
 #ifndef MOTION_PARAMETERS_H
@@ -61,7 +60,6 @@ class MotionParameters
     //double max_steeringangle;
     double inclination_speed_reduction_factor;
     double inclination_speed_reduction_time_constant;
-    double current_velocity;
     double current_inclination;
     double max_controller_speed_;
     double max_unlimited_speed_;

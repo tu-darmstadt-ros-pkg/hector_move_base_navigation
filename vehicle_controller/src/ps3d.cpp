@@ -1,8 +1,6 @@
 #include <vehicle_controller/ps3d.h>
 #include <vehicle_controller/quaternions.h>
 
-#include <iostream>
-
 #include <ros/ros.h>
 
 using std::vector;
@@ -82,7 +80,7 @@ void Pathsmoother3D::smooth(deque_vec3 const & in_path,
         }
     }
 
-    smoothed_orientations = computeSmoothedOrientations(distances, in_path, smoothed_positions, in_start_orientation, in_end_orientation, reverse);
+    smoothed_orientations = computeSmoothedOrientations(smoothed_positions, in_start_orientation, in_end_orientation, reverse);
     out_smooth_positions = smoothed_positions;
     out_smooth_orientations = smoothed_orientations;
 }
@@ -142,8 +140,7 @@ vector_vec3 Pathsmoother3D::computeSmoothedPositions(std::vector<float> const & 
 }
 
 
-vector_quat Pathsmoother3D::computeSmoothedOrientations(std::vector<float> const & distances, deque_vec3 const & original_positions,
-                                        vector_vec3 const & smoothed_positions, quat const & start_orientation, quat const & end_orientation, bool reverse)
+vector_quat Pathsmoother3D::computeSmoothedOrientations(vector_vec3 const & smoothed_positions, quat const & start_orientation, quat const & end_orientation, bool reverse)
 {
     vector_quat smoothed_orientations;
     smoothed_orientations.reserve(smoothed_positions.size());

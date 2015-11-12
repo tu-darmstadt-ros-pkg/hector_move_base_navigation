@@ -62,7 +62,7 @@ void DifferentialDriveController::executeUnlimitedTwist(const geometry_msgs::Twi
     double speed = twist.linear.x;
     double angular_rate = twist.angular.z;
 
-    angular_rate = std::max(-mp_->max_unlimited_angular_rate_, std::min<double>(mp_->max_unlimited_angular_rate_, angular_rate));
+    angular_rate = std::max(-mp_->max_unlimited_angular_rate_, std::min(mp_->max_unlimited_angular_rate_, angular_rate));
     speed        = std::max(-mp_->max_unlimited_speed_, std::min(speed, mp_->max_unlimited_speed_));
 
     twist.linear.x = speed;
@@ -82,8 +82,7 @@ void DifferentialDriveController::executePDControlledMotionCommand(double e_angl
     static double previous_e_angle = e_angle;
     static double previous_e_position = e_position;
 
-    // Assumption: e_angle lies in [M_PI_2, M_PI]
-
+    // Assumption: e_angle lies in [M_PI, M_PI]
     if(e_angle > M_PI_2)
         e_angle = e_angle - M_PI;
     if(e_angle < -M_PI_2)
@@ -126,7 +125,7 @@ void DifferentialDriveController::executeMotionCommand(double carrot_relative_an
                                   double signed_carrot_distance_2_robot, double dt)
 {
     double e_angle = carrot_relative_angle; // speed < 0 ? carrot_orientation_error : carrot_relative_angle;
-    if(e_angle > M_PI + 1e-2 || e_angle < -M_PI -1e-2)
+    if(e_angle > M_PI + 1e-2 || e_angle < -M_PI - 1e-2)
     {
         ROS_WARN("[vehicle_controller] [differential_drive_controller] Invalid angle was given.");
     }
@@ -167,8 +166,6 @@ void DifferentialDriveController::limitTwist(geometry_msgs::Twist& twist, double
     double speed = twist.linear.x;
     double angular_rate = twist.angular.z;
 
-    mp_->limitSpeed(speed);
-
     speed        = std::max(-mp_->max_unlimited_speed_, std::min(mp_->max_unlimited_speed_, speed));
     angular_rate = std::max(-mp_->max_unlimited_angular_rate_, std::min(mp_->max_unlimited_angular_rate_, angular_rate));
 
@@ -176,10 +173,7 @@ void DifferentialDriveController::limitTwist(geometry_msgs::Twist& twist, double
     double t = mp_->max_controller_speed_;
     double speedAbsUL = std::min(std::max(0.0, m * std::abs(angular_rate) + t), max_speed);
 
-    speed = std::max(-speedAbsUL, std::min(speed, speedAbsUL));
-    angular_rate = std::max(-max_angular_rate, std::min(max_angular_rate, angular_rate));
-
-    twist.linear.x = speed;
-    twist.angular.z = angular_rate;
+    twist.linear.x = std::max(-speedAbsUL, std::min(speed, speedAbsUL));
+    twist.angular.z = std::max(-max_angular_rate, std::min(max_angular_rate, angular_rate));
 }
 

@@ -6,5 +6,7 @@ float32 e_angle
 float32 de_angle_dt
 float32 speed
 float32 speed_real
+float32 z_twist
+float32 z_twist_real
 float32 z_twist_deg
 float32 z_twist_deg_real

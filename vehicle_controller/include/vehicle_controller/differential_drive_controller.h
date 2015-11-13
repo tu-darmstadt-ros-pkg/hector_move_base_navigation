@@ -23,7 +23,6 @@
     ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
     SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 */
 
 #ifndef DIFFERENTIAL_DRIVE_CONTROLLER_H
@@ -39,6 +38,7 @@
 
 #include <dynamic_reconfigure/server.h>
 #include <vehicle_controller/PdParamsConfig.h>
+#include <vehicle_controller/PdParamsArgoConfig.h>
 
 
 class DifferentialDriveController: public VehicleControlInterface
@@ -50,11 +50,15 @@ class DifferentialDriveController: public VehicleControlInterface
 
     inline virtual bool hasReachedFinalOrientation(double goal_angle_error, double tol)
     {
-        /// for symmetric robot!
-        return std::abs(goal_angle_error) < tol || std::abs(goal_angle_error - M_PI) < tol || std::abs(goal_angle_error + M_PI) < tol;
+        if(mp_->isYSymmetric())
+        {
+            return std::abs(goal_angle_error) < tol || std::abs(goal_angle_error - M_PI) < tol || std::abs(goal_angle_error + M_PI) < tol;
+        }
+        else
+        {
+            return std::abs(goal_angle_error) < tol;
+        }
     }
-
-    void pdGainCallback(vehicle_controller::PdParamsConfig & config, uint32_t level);
 
     virtual void executeUnlimitedTwist(const geometry_msgs::Twist& inc_twist);
 
@@ -83,14 +87,34 @@ class DifferentialDriveController: public VehicleControlInterface
     void limitTwist(geometry_msgs::Twist& twist, double max_speed, double max_angular_rate);
 
   protected:
-    ros::Publisher cmdVelRawPublisher_;
-    ros::Publisher pdoutPublisher_;
+    ros::Publisher cmd_vel_raw_pub_;
+    ros::Publisher pdout_pub_;
+
     geometry_msgs::Twist twist;
     MotionParameters* mp_;
 
+    template <typename TPD> void pdParamCallback(TPD & config, uint32_t level)
+    {
+        KP_ANGLE_ = config.angle_p_gain;
+        KD_ANGLE_ = config.angle_d_gain;
+        KP_POSITION_ = config.position_p_gain;
+        KD_POSITION_ = config.position_d_gain;
+        mp_->commanded_speed = config.speed;
+        SPEED_REDUCTION_GAIN_ = config.speed_reduction_gain;
+        mp_->USE_FINAL_TWIST_ = config.use_final_twist;
+        mp_->FINAL_TWIST_TRIALS_MAX_ = config.final_twist_trials_max;
+        mp_->flipper_low_position = config.flipper_low_position;
+        mp_->flipper_high_position = config.flipper_high_position;
+        mp_->flipper_switch_position = config.flipper_switch_position;
+    }
+
   private:
 
-    double wheel_separation_;
+    double KP_ANGLE_;
+    double KD_ANGLE_;
+    double KP_POSITION_;
+    double KD_POSITION_;
+    double SPEED_REDUCTION_GAIN_;
 
     //
     // TODO
@@ -98,7 +122,8 @@ class DifferentialDriveController: public VehicleControlInterface
     // or the controller itself but definitely not in this class
     // This has to be fixed!!!
     //
-    dynamic_reconfigure::Server<vehicle_controller::PdParamsConfig> * dr_server_;
+    dynamic_reconfigure::Server<vehicle_controller::PdParamsConfig> * dr_default_server_ = 0;
+    dynamic_reconfigure::Server<vehicle_controller::PdParamsArgoConfig> * dr_argo_server_ = 0;
 };
 
 #endif

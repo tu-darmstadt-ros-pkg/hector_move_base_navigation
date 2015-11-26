@@ -1,4 +1,5 @@
 Header header
+bool approaching_goal_point
 float32 dt
 float32 e_position
 float32 de_position_dt

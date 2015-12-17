@@ -14,12 +14,7 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
 
   ros::NodeHandle nh;
 
-  private_nh_.param("circumscribed_radius", circumscribedRadius_, 0.3);
   private_nh_.param("goal_reached_radius", goalReachedRadius_, 0.2);
-  private_nh_.param("goal_reached_angular_variance", goalReachchedAngularVariance_, M_PI_4);
-  double goalReachedLinearVariance;
-  private_nh_.param("goal_reached_linear_variance", goalReachedLinearVariance, M_PI_4);
-  goalReachedSquaredLinearVariance_ = goalReachedLinearVariance * goalReachedLinearVariance;
   private_nh_.param("controller_namespace", controller_namespace_, std::string("/controller"));
   private_nh_.param("use_alternate_planner", use_alternate_planner_, true);
   private_nh_.param("observe_linear_tolerance", observeLinearTolerance_, 0.2);
@@ -29,7 +24,8 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
   observe_time_limit_ = ros::Duration(observe_time_limit);
 
   costmap_ = new costmap_2d::Costmap2DROS("global_costmap", tf_);
-  ROS_DEBUG("[hector_move_base]: costmap loaded");
+
+  ROS_DEBUG("[hector_move_base] Costmap loaded");
 
   exploringState_.reset(new hector_move_base_handler::HectorExplorationHandler(this));
   planningState_.reset(new hector_move_base_handler::HectorPlanningHandler(this));
@@ -46,26 +42,22 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
   stuckPlanningRecoveryState_.reset(new hector_move_base_handler::HectorStuckRecoveryHandler(this));
   idleState_.reset(new hector_move_base_handler::HectorIdleHandler(this));
 
-  ROS_DEBUG("[hector_move_base]: all states created");
+  ROS_DEBUG("[hector_move_base] All states created");
 
   std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForExploration;
   mappingForExploration.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, planningState_));
-  if (use_alternate_planner_) {
+  if (use_alternate_planner_)
     mappingForExploration.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(ALTERNATIVE, refinePlanState_));
-  }
-  else {
+  else
     mappingForExploration.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(ALTERNATIVE, publishPathState_));
-  }
   mappingForExploration.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(FAIL, stuckExplorationRecoveryState_));
   statemachine_->addHandlerMapping(exploringState_, mappingForExploration);
 
   std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPlanning;
-  if (use_alternate_planner_) {
+  if (use_alternate_planner_)
     mappingForPlanning.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, refinePlanState_));
-  }
-  else {
+  else
     mappingForPlanning.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, publishPathState_));
-  }
   mappingForPlanning.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(ALTERNATIVE, exploringState_));
   mappingForPlanning.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(FAIL, stuckPlanningRecoveryState_));
   statemachine_->addHandlerMapping(planningState_, mappingForPlanning);
@@ -124,7 +116,7 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
   mappingForIdleState.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, idleState_));
   statemachine_->addHandlerMapping(idleState_, mappingForIdleState);
 
-  ROS_DEBUG("[hector_move_base]: states connected to a statemachine");
+  ROS_DEBUG("[hector_move_base] Statemachine mapping created.");
 
   startState_ = exploringState_;
   currentState_ = idleState_;
@@ -152,9 +144,6 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
   publishAutonomyLevel("autonomous");
   last_observe_cb_.first = actionlib_msgs::GoalID();
   last_observe_cb_.second = ros::Time(0);
-
-  //    ROS_DEBUG("[hector_move_base]: going to create new boost thread for main loop");
-  //    main_loop_thread_ = new boost::thread(boost::bind(&HectorMoveBase::moveBaseLoop, this, nh, controllerFrequency));
 }
 
 HectorMoveBase::~HectorMoveBase(){
@@ -180,10 +169,10 @@ handlerActionGoal HectorMoveBase::getCurrentGoal() {
   return goals_.back();
 }
 
-void HectorMoveBase::popCurrentGoal() {
-  if (goals_.empty()) {
-    return;
-  }
+void HectorMoveBase::popCurrentGoal()
+{
+  if (goals_.empty())
+      return;
   goals_.pop_back();
 }
 
@@ -654,16 +643,6 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
   }
 }
 
-//TODO (fkunz) Unused? Remove!
-//void HectorMoveBase::moveBaseLoop(ros::NodeHandle& nh, ros::Rate rate) {
-//    ROS_DEBUG("[hector_move_base]: moveBaseLoop started");
-//    std::cout << "test" << std::endl;
-//    while (nh.ok()) {
-//        moveBaseStep();
-//        rate.sleep();
-//    }
-//}
-
 void HectorMoveBase::publishStateName(boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> state) {
   std_msgs::String msg;
   msg.data = typeid(*state.get()).name();
@@ -827,7 +806,8 @@ void HectorMoveBase::ensureActionPathValid(hector_move_base_msgs::MoveBaseAction
 }
 }
 
-int main(int argc, char** argv){
+int main(int argc, char** argv)
+{
   // in order to replace the original move_base seamlessly we use its name
   ros::init(argc, argv, "move_base");
 

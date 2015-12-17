@@ -61,7 +61,7 @@ private:
 
     int goal_id_counter_;
     geometry_msgs::Polygon footprint_;
-    double circumscribedRadius_, goalReachedRadius_, goalReachchedAngularVariance_, goalReachedSquaredLinearVariance_, observeLinearTolerance_, observeAngularTolerance_;
+    double goalReachedRadius_, observeLinearTolerance_, observeAngularTolerance_;
     std::string controller_namespace_;
     bool use_alternate_planner_;
     std::vector<handlerActionGoal> goals_;

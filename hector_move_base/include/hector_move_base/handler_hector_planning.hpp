@@ -7,19 +7,22 @@
 
 namespace hector_move_base_handler {
 
-class HectorPlanningHandler : public HectorMoveBaseHandler {
+class HectorPlanningHandler : public HectorMoveBaseHandler
+{
 private:
     costmap_2d::Costmap2DROS* costmap_;
     pluginlib::ClassLoader<hector_nav_core::ExplorationPlanner> expl_loader_;
     boost::shared_ptr<hector_nav_core::ExplorationPlanner> exploration_planner_;
 
-    bool isGoalIDEqual(const actionlib_msgs::GoalID& firstGoalID, const actionlib_msgs::GoalID& secondGoalID) {
-        return ((firstGoalID.stamp == secondGoalID.stamp) && (firstGoalID.id == secondGoalID.id));
+    bool isGoalIDEqual(const actionlib_msgs::GoalID& firstGoalID, const actionlib_msgs::GoalID& secondGoalID)
+    {
+        return firstGoalID.stamp == secondGoalID.stamp && firstGoalID.id == secondGoalID.id;
     }
 
 public:
-    HectorPlanningHandler(hector_move_base::IHectorMoveBase* interface) : HectorMoveBaseHandler(interface)
-      , expl_loader_("hector_nav_core", "hector_nav_core::ExplorationPlanner")
+    HectorPlanningHandler(hector_move_base::IHectorMoveBase* interface)
+        : HectorMoveBaseHandler(interface),
+          expl_loader_("hector_nav_core", "hector_nav_core::ExplorationPlanner")
     {
         costmap_ = interface->getCostmap();
         ros::NodeHandle private_nh("~");
@@ -45,7 +48,8 @@ public:
 
             exploration_planner_ = expl_loader_.createInstance(exploration_planner_name);
             exploration_planner_->initialize(expl_loader_.getName(exploration_planner_name), costmap_);
-        } catch (const pluginlib::PluginlibException& ex)
+        }
+        catch (const pluginlib::PluginlibException& ex)
         {
             ROS_FATAL("Failed to create the %s planner, are you sure it is properly registered and that the containing library is built? Exception: %s", exploration_planner_name.c_str(), ex.what());
             exit(0);
@@ -71,8 +75,9 @@ public:
 
         //get the starting pose of the robot
         tf::Stamped<tf::Pose> global_pose;
-        if(!costmap_->getRobotPose(global_pose)){
-            ROS_ERROR("[planning_handler]: makePlan failed due to pose not being retrievable from costmap");
+        if(!costmap_->getRobotPose(global_pose))
+        {
+            ROS_ERROR("[planning_handler] makePlan failed due to pose not being retrievable from costmap");
             return hector_move_base::FAIL;
         }
 
@@ -80,12 +85,15 @@ public:
         tf::poseStampedTFToMsg(global_pose, start);
 
         //if the planner fails or returns a zero length plan, planning failed
-        if((!exploration_planner_->makePlan(start, current_goal.target_pose, plan, current_goal.distance)) || plan.empty()){
-            ROS_INFO("[planning_handler]: execution of hector planner failed for goal (%.2f, %.2f)", current_goal.target_pose.pose.position.x, current_goal.target_pose.pose.position.y);
-            if (hectorMoveBaseInterface->getGlobalGoal().do_exploration) {
-                ROS_INFO("[planning_handler]: In Exploration. Looking for new frontier.");
+        if(!exploration_planner_->makePlan(start, current_goal.target_pose, plan, current_goal.distance) || plan.empty())
+        {
+            ROS_INFO("[hector_move_base] [planning_handler] Execution of hector planner failed for goal (%.2f, %.2f)",
+                     current_goal.target_pose.pose.position.x, current_goal.target_pose.pose.position.y);
+            if (hectorMoveBaseInterface->getGlobalGoal().do_exploration)
+            {
+                ROS_INFO("[hector_move_base] [planning_handler]: In Exploration. Looking for new frontier.");
                 return hector_move_base::ALTERNATIVE;
-        }
+            }
             return hector_move_base::FAIL;
         }
 
@@ -94,13 +102,15 @@ public:
         new_path.header.frame_id = current_goal.target_pose.header.frame_id;
         new_path.header.stamp = current_goal.target_pose.header.stamp;
         new_path.goal.speed = current_goal.speed;
+        new_path.goal.fixed = false;
         new_path.goal.target_path.header.frame_id = new_path.header.frame_id ;
         new_path.goal.target_path.header.stamp = ros::Time::now() ;
         new_path.goal.target_path.poses = plan;
         hectorMoveBaseInterface->setActionPath(new_path);
-        ROS_DEBUG("[planning_handler]: NEXT plan generated, continue");
+        ROS_DEBUG("[hector_move_base] [planning_handler] NEXT plan generated, continue");
 
-        if (isGoalIDEqual(current_goal.goal_id, hectorMoveBaseInterface->getCurrentGoal().goal_id)) {
+        if (isGoalIDEqual(current_goal.goal_id, hectorMoveBaseInterface->getCurrentGoal().goal_id))
+        {
             hectorMoveBaseInterface->popCurrentGoal();
             current_goal.target_pose.pose = plan.back().pose;
             hectorMoveBaseInterface->pushCurrentGoal(current_goal);
@@ -109,8 +119,9 @@ public:
         return hector_move_base::NEXT;
     }
 
-    void abort() {
-        ROS_WARN("[planning_handler]: abort was called in planning this seams to lead to unresponsive behavior");
+    void abort()
+    {
+        ROS_WARN("[hector_move_base] [planning_handler] abort was called in planning this seams to lead to unresponsive behavior");
     }
 };
 }

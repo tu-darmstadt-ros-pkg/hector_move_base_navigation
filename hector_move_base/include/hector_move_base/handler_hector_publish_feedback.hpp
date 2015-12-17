@@ -17,7 +17,8 @@ public:
         feedback_pub_ = private_nh.advertise<move_base_msgs::MoveBaseActionFeedback>("feedback", 0 );
     }
 
-    hector_move_base::RESULT handle(){
+    hector_move_base::RESULT handle()
+    {
         tf::Stamped<tf::Pose> robot_pose;
         costmap_->getRobotPose(robot_pose);
         geometry_msgs::PoseStamped current_position;

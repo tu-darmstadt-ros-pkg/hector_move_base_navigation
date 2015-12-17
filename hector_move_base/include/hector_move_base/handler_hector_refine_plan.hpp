@@ -95,6 +95,7 @@ public:
                 new_path.header.frame_id = current_path.header.frame_id;
                 new_path.header.stamp = current_path.goal.target_path.header.stamp;
                 new_path.goal.speed = current_path.goal.speed;
+                new_path.goal.fixed = true;
                 new_path.goal.target_path.header.frame_id = current_path.goal.target_path.header.frame_id;
                 new_path.goal.target_path.header.stamp = ros::Time::now();
                 new_path.goal.target_path.poses = trajectory;

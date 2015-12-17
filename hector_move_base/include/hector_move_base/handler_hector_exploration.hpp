@@ -72,6 +72,7 @@ public:
             new_path.goal_id = new_goal.goal_id;
             new_path.header.frame_id = new_goal.target_pose.header.frame_id;
             new_path.header.stamp = new_goal.target_pose.header.stamp;
+            new_path.goal.fixed = false;
             new_path.goal.speed = new_goal.speed;
             new_path.goal.target_path.header.frame_id = new_path.header.frame_id;
             new_path.goal.target_path.header.stamp = ros::Time::now();

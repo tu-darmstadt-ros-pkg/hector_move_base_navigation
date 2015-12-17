@@ -14,7 +14,8 @@ public:
         result_pub_ = private_nh.advertise<hector_move_base_msgs::MoveBaseActionResult>("result", 0 );
     }
 
-    hector_move_base::RESULT handle(){
+    hector_move_base::RESULT handle()
+    {
         ROS_DEBUG("[publish_abort_handler]: starting publish abort");
         hector_move_base_msgs::MoveBaseActionResult action_result;
         action_result.header.stamp = ros::Time::now();

@@ -44,7 +44,6 @@ namespace hector_move_base {
  */
 class HectorMoveBase : public IHectorMoveBase
 {
-
 private:
     costmap_2d::Costmap2DROS* costmap_;
     ros::NodeHandle nh_, private_nh_;
@@ -58,7 +57,6 @@ private:
     boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> currentState_, nextState_, startState_;
 
     int goal_id_counter_;
-    geometry_msgs::Polygon footprint_;
     double goalReachedRadius_, observeLinearTolerance_, observeAngularTolerance_;
     std::string controller_namespace_;
     bool use_alternate_planner_;
@@ -111,8 +109,8 @@ private:
     void loadDefaultMoveBasePlugins();
 
     /**
-   * callback methods
-   */
+     * callback methods
+     */
     void exploreCB(const hector_move_base_msgs::MoveBaseActionExploreConstPtr &goal);
 //    void goalCB(const hector_move_base_msgs::MoveBaseActionGoalConstPtr &goal);
     void asGoalCB();
@@ -124,7 +122,6 @@ private:
     void syscommandCB(const std_msgs::StringConstPtr &string);
     void controllerResultCB(const hector_move_base_msgs::MoveBaseActionResultConstPtr &result);
 
-    void moveBaseLoop(ros::NodeHandle&, ros::Rate);
     void abortedGoal();
     void preemptedGoal();
     void rejectedGoal();

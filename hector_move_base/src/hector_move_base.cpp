@@ -9,14 +9,13 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
   statemachine_(new HectorMoveBaseStateMachine),
   tf_(tf),
   main_loop_thread_(NULL),
-  move_base_plugin_loader_("nav_core", "nav_core::RecoveryBehavior"){
+  move_base_plugin_loader_("nav_core", "nav_core::RecoveryBehavior")
+{
 
   ros::NodeHandle nh;
 
   private_nh_.param("circumscribed_radius", circumscribedRadius_, 0.3);
   private_nh_.param("goal_reached_radius", goalReachedRadius_, 0.2);
-  private_nh_.param("time_to_trigger_replanning", timeToTriggerReplannning_, 2.0);
-  private_nh_.param("time_to_trigger_exploration", timeToTriggerExploration_, 4.0);
   private_nh_.param("goal_reached_angular_variance", goalReachchedAngularVariance_, M_PI_4);
   double goalReachedLinearVariance;
   private_nh_.param("goal_reached_linear_variance", goalReachedLinearVariance, M_PI_4);

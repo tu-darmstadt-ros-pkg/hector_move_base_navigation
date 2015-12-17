@@ -15,7 +15,7 @@ private:
 
     // ------------------------------------------------------------------------------------
     // Contribution by Paul Manns, feature for ARGOS Challenge only.
-    // Always plan with SBPL Planner.
+    // Can be used to plan always with SBPL Planner.
     pluginlib::ClassLoader<nav_core::BaseGlobalPlanner> bgp_loader_;
     boost::shared_ptr<nav_core::BaseGlobalPlanner> trajectory_planner_;
     bool sbpl_only;
@@ -34,8 +34,8 @@ public:
         std::string exploration_planner_name = "hector_nav_core_exploration_plugin/HectorNavCoreExplorationPlugin";
         private_nh.param("exploration_planner", exploration_planner_name, exploration_planner_name);
 
-
-        try {
+        try
+        {
             //check if a non fully qualified name has potentially been passed in
             if(!expl_loader_.isClassAvailable(exploration_planner_name)){
                 std::vector<std::string> classes = expl_loader_.getDeclaredClasses();
@@ -119,6 +119,7 @@ public:
             new_path.goal_id = new_goal.goal_id;
             new_path.header.frame_id = new_goal.target_pose.header.frame_id;
             new_path.header.stamp = new_goal.target_pose.header.stamp;
+            new_path.goal.fixed = false;
             new_path.goal.speed = new_goal.speed;
             new_path.goal.target_path.header.frame_id = new_path.header.frame_id;
             new_path.goal.target_path.header.stamp = ros::Time::now();

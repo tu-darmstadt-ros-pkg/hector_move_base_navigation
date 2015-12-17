@@ -126,6 +126,8 @@ public:
 
         ROS_DEBUG("[move_base] [planning_handler] sbpl_only = %d", sbpl_only);
 
+        bool fixed = false;
+
         if(sbpl_only)
         {
             // ------------------------------------------------------------------------------------
@@ -146,6 +148,7 @@ public:
                 return hector_move_base::FAIL;
             }
             plan = trajectory;
+            fixed = true;
             // ------------------------------------------------------------------------------------
         }
         else
@@ -161,13 +164,14 @@ public:
                 }
                 return hector_move_base::FAIL;
             }
+            fixed = false;
         }
-
 
         hector_move_base_msgs::MoveBaseActionPath new_path = hector_move_base_msgs::MoveBaseActionPath();
         new_path.goal_id = current_goal.goal_id;
         new_path.header.frame_id = current_goal.target_pose.header.frame_id;
         new_path.header.stamp = current_goal.target_pose.header.stamp;
+        new_path.goal.fixed = fixed;
         new_path.goal.speed = current_goal.speed;
         new_path.goal.target_path.header.frame_id = new_path.header.frame_id ;
         new_path.goal.target_path.header.stamp = ros::Time::now() ;

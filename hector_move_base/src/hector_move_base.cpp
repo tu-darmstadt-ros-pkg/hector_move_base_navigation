@@ -8,7 +8,6 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
   private_nh_("~"),
   statemachine_(new HectorMoveBaseStateMachine),
   tf_(tf),
-  main_loop_thread_(NULL),
   move_base_plugin_loader_("nav_core", "nav_core::RecoveryBehavior")
 {
 
@@ -21,7 +20,6 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
   private_nh_.param("observe_angular_tolerance", observeAngularTolerance_, M_PI_2);
   double observe_time_limit;
   private_nh_.param("observe_time_limit", observe_time_limit, 10.0);
-  observe_time_limit_ = ros::Duration(observe_time_limit);
 
   costmap_ = new costmap_2d::Costmap2DROS("global_costmap", tf_);
 
@@ -142,17 +140,12 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
   tolerance_client_ = controller_nh.serviceClient<monstertruck_msgs::SetAlternativeTolerance>("set_alternative_tolerances");
 
   publishAutonomyLevel("autonomous");
-  last_observe_cb_.first = actionlib_msgs::GoalID();
-  last_observe_cb_.second = ros::Time(0);
 }
 
-HectorMoveBase::~HectorMoveBase(){
-
-  if(costmap_ != NULL)
-    delete costmap_;
-
-  if(main_loop_thread_)
-    delete main_loop_thread_;
+HectorMoveBase::~HectorMoveBase()
+{
+    if(costmap_ != NULL)
+        delete costmap_;
 }
 
 handlerActionGoal HectorMoveBase::getGlobalGoal() {
@@ -462,8 +455,6 @@ void HectorMoveBase::observationCB(const hector_move_base_msgs::MoveBaseActionGo
 
   pushCurrentGoal(newGoal);
   setNextState(planningState_);
-  last_observe_cb_.first = newGoal.goal_id;
-  last_observe_cb_.second = ros::Time::now();
   return;
 }
 

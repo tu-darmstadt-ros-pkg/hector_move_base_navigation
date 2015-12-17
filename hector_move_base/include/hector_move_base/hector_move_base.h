@@ -27,8 +27,6 @@
 
 #include <visualization_msgs/Marker.h>
 
-#include <boost/thread.hpp>
-#include <boost/thread/mutex.hpp>
 #include <ros/ros.h>
 #include <std_msgs/String.h>
 #include <tf/tf.h>
@@ -47,7 +45,6 @@ class HectorMoveBase : public IHectorMoveBase {
   ros::NodeHandle private_nh_;
   boost::shared_ptr<HectorMoveBaseStateMachine> statemachine_;
   tf::TransformListener& tf_;
-  boost::thread* main_loop_thread_;
 
   boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> idleState_;
   boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> exploringState_, planningState_, refinePlanState_, publishPathState_, publishFeedbackState_, waitForReplanningState_, waitForReexploringState_;
@@ -65,14 +62,10 @@ class HectorMoveBase : public IHectorMoveBase {
   ros::ServiceClient tolerance_client_;
   pluginlib::ClassLoader<nav_core::RecoveryBehavior> move_base_plugin_loader_;
   std::vector<boost::shared_ptr<nav_core::RecoveryBehavior> > move_base_plugins_;
-  ros::Duration observe_time_limit_;
-  std::pair<actionlib_msgs::GoalID, ros::Time> last_observe_cb_;
-
-  boost::recursive_mutex currentStatMutex_;
 
  public:
 
-  /*
+  /**
    * @brief  Constructor for the actions
    * @param name The name of the action
    * @param tf A reference to a TransformListener

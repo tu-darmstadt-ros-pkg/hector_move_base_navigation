@@ -9,33 +9,27 @@
 
 #include <map>
 
-namespace hector_move_base_handler {
+namespace hector_move_base_handler
+{
 
 /**
  * @abstract HectorMoveBaseHandler
  * @brief Provides an abstract class for implementation of HectorMoveBase modules
  */
-class HectorMoveBaseHandler{
+class HectorMoveBaseHandler
+{
 protected:
     hector_move_base::IHectorMoveBase* hectorMoveBaseInterface;
 
-    HectorMoveBaseHandler(hector_move_base::IHectorMoveBase* interface) {
+    HectorMoveBaseHandler(hector_move_base::IHectorMoveBase* interface)
+    {
         hectorMoveBaseInterface = interface;
     }
 
 public:
-    virtual hector_move_base::RESULT handle() {
-        ROS_WARN("[hector_move_base_handler]: virtual function handle() was not implemented, but called");
-        return hector_move_base::FAIL;
-    }
+    virtual hector_move_base::RESULT handle() = 0;
 
-    virtual void abort() {
-        ROS_WARN("[hector_move_base_handler]: virtual function abort() was not implemented, but called");
-    }
-
-    virtual void reset() {
-        ROS_WARN("[hector_move_base_handler]: virtual function reset() was not implemented, but called");
-    }
+    virtual void abort() = 0;
 };
 
 }

@@ -747,7 +747,7 @@ geometry_msgs::PoseStamped HectorMoveBase::goalToGlobalFrame(const geometry_msgs
 }
 
 bool HectorMoveBase::isGoalIDEqual(const actionlib_msgs::GoalID& firstGoalID, const actionlib_msgs::GoalID& secondGoalID) {
-  return ((firstGoalID.stamp == secondGoalID.stamp) && (firstGoalID.id == secondGoalID.id));
+  return firstGoalID.stamp == secondGoalID.stamp && firstGoalID.id == secondGoalID.id;
 }
 
 void HectorMoveBase::ensureActionPathValid(hector_move_base_msgs::MoveBaseActionPath &path, bool warn_user) {

@@ -112,7 +112,6 @@ class HectorMoveBase : public IHectorMoveBase {
   void syscommandCB(const std_msgs::String::ConstPtr& string);
   void controllerResultCB(const hector_move_base_msgs::MoveBaseActionResult::ConstPtr& result);
 
-  //    void moveBaseLoop(ros::NodeHandle&, ros::Rate);
   void abortedGoal();
   void preemptedGoal();
   void rejectedGoal();

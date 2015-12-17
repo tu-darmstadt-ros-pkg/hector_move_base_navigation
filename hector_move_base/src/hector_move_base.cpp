@@ -490,7 +490,8 @@ void HectorMoveBase::cancelCB(const std_msgs::Empty::ConstPtr& empty){
 void HectorMoveBase::syscommandCB(const std_msgs::String::ConstPtr& string){
   ROS_DEBUG("[hector_move_base]: In syscommandCB callback: %s", string->data.c_str());
 
-  if (string->data == "reset") {
+  if (string->data == "reset")
+  {
     abortedGoal();
     setNextState(idleState_);
 
@@ -662,14 +663,6 @@ void HectorMoveBase::moveBaseStep() {
     return;
   }
 
-  /*
-  if (isObserveStuck()) {
-    ROS_WARN("Observe Stuck detected. Aborting current goal. Waiting for new goal.");
-    abortedGoal();
-    return;
-  }
-  */
-
   switch (result) {
     
     case WAIT:
@@ -683,15 +676,6 @@ void HectorMoveBase::moveBaseStep() {
       return;
   }
 
-}
-
-bool HectorMoveBase::isObserveStuck() {
-  if (isGoalIDEqual(last_observe_cb_.first, getCurrentGoal().goal_id)) {
-    if (observe_time_limit_ < (ros::Time::now() - last_observe_cb_.second) ) {
-      return true;
-    }
-  }
-  return false;
 }
 
 void HectorMoveBase::publishAutonomyLevel(const std::string autonomy_level_string)
@@ -804,6 +788,7 @@ void HectorMoveBase::ensureActionPathValid(hector_move_base_msgs::MoveBaseAction
       ROS_WARN("[hector_move_base]: goal_id with zero time stamp. Setting current time.");
   }
 }
+
 }
 
 int main(int argc, char** argv)

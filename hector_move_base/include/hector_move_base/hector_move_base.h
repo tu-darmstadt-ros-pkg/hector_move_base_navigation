@@ -128,7 +128,6 @@ class HectorMoveBase : public IHectorMoveBase {
   void clearGoal();
   geometry_msgs::PoseStamped goalToGlobalFrame(const geometry_msgs::PoseStamped&);
   bool isGoalIDEqual(const actionlib_msgs::GoalID&,const actionlib_msgs::GoalID&);
-  bool isObserveStuck();
   void ensureActionPathValid(hector_move_base_msgs::MoveBaseActionPath &path, bool warn_user=true);
 };
 }

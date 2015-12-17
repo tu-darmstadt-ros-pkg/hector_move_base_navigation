@@ -30,8 +30,6 @@
 
 #include <actionlib/server/simple_action_server.h>
 #include <actionlib/client/simple_action_client.h>
-#include <boost/thread.hpp>
-#include <boost/thread/mutex.hpp>
 #include <ros/ros.h>
 #include <std_msgs/String.h>
 #include <sensor_msgs/JointState.h>
@@ -44,14 +42,14 @@ namespace hector_move_base {
  * @class HectorMoveBase
  * @brief A class that moves the robot base to a goal location.
  */
-class HectorMoveBase : public IHectorMoveBase {
+class HectorMoveBase : public IHectorMoveBase
+{
 
 private:
     costmap_2d::Costmap2DROS* costmap_;
     ros::NodeHandle nh_, private_nh_;
     boost::shared_ptr<HectorMoveBaseStateMachine> statemachine_;
     tf::TransformListener& tf_;
-    boost::thread* main_loop_thread_;
 
     boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> idleState_;
     boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> exploringState_, planningState_, refinePlanState_, publishPathState_, publishFeedbackState_, waitForReplanningState_, waitForReexploringState_;
@@ -72,8 +70,6 @@ private:
     pluginlib::ClassLoader<nav_core::RecoveryBehavior> move_base_plugin_loader_;
     std::vector<boost::shared_ptr<nav_core::RecoveryBehavior> > move_base_plugins_;
 
-    boost::recursive_mutex currentStatMutex_;
-
     bool use_exploring_;
 
 protected:
@@ -81,15 +77,15 @@ protected:
 
 public:
     /**
-   * @brief  Constructor for the actions
-   * @param name The name of the action
-   * @param tf A reference to a TransformListener
-   */
+     * @brief  Constructor for the actions
+     * @param name The name of the action
+     * @param tf A reference to a TransformListener
+     */
     HectorMoveBase(std::string name, tf::TransformListener& tf);
 
     /**
-   * @brief  Destructor - Cleans up
-   */
+     * @brief  Destructor - Cleans up
+     */
     virtual ~HectorMoveBase();
 
     handlerActionGoal getGlobalGoal();

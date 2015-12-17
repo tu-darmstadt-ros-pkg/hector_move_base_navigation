@@ -8,7 +8,6 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     private_nh_("~"),
     statemachine_(new HectorMoveBaseStateMachine),
     tf_(tf),
-    main_loop_thread_(NULL),
     move_base_plugin_loader_("nav_core", "nav_core::RecoveryBehavior"),
     action_server_(nh_, name, false)
 {
@@ -150,9 +149,6 @@ HectorMoveBase::~HectorMoveBase()
 {
     if(costmap_ != NULL)
         delete costmap_;
-
-    if(main_loop_thread_)
-        delete main_loop_thread_;
 }
 
 handlerActionGoal HectorMoveBase::getGlobalGoal() {

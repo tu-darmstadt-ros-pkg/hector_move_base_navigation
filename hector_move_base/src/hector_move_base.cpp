@@ -512,7 +512,7 @@ void HectorMoveBase::syscommandCB(const std_msgs::String::ConstPtr& string){
 }
 
 void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseActionResult::ConstPtr& result){
-  ROS_DEBUG("[hector_move_base]: In controller result callback");
+  ROS_DEBUG("[hector_move_base] Controller result callback");
 
   hector_move_base_msgs::MoveBaseActionPath current_action_path = getCurrentActionPath();
   handlerActionGoal global_goal = getGlobalGoal();
@@ -641,21 +641,23 @@ void HectorMoveBase::publishStateName(boost::shared_ptr<hector_move_base_handler
   state_name_pub_.publish(msg);
 }
 
-void HectorMoveBase::moveBaseStep() {
-
+void HectorMoveBase::moveBaseStep()
+{
   std_msgs::String str;
   str.data = typeid(*currentState_.get()).name();
   state_name_pub_.publish(str);
   RESULT result = currentState_->handle();
-  if (currentState_ != nextState_) {
+
+  if (currentState_ != nextState_)
+  {
     currentState_ = nextState_;
     publishStateName(currentState_);
     ROS_DEBUG("[hector_move_base]: nextState_ was set, ignoring statemachine mapping");
     return;
   }
 
-  switch (result) {
-    
+  switch (result)
+  {
     case WAIT:
       ROS_DEBUG("[hector_move_base]: result is WAIT, currentState_ will be kept");
       return;
@@ -666,7 +668,6 @@ void HectorMoveBase::moveBaseStep() {
       publishStateName(currentState_);
       return;
   }
-
 }
 
 void HectorMoveBase::publishAutonomyLevel(const std::string autonomy_level_string)

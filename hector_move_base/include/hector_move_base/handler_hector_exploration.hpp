@@ -87,7 +87,8 @@ public:
         return hector_move_base::NEXT;
     }
 
-    void abort() {
+    void abort()
+    {
     }
 
     bool getExplorationGoal(geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan){

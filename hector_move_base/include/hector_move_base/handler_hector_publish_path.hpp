@@ -18,10 +18,16 @@ public:
         drivepath_pub_ = controller_nh.advertise<hector_move_base_msgs::MoveBaseActionPath>("path", 0 );
     }
 
-    hector_move_base::RESULT handle(){
+    hector_move_base::RESULT handle()
+    {
         ROS_DEBUG("[publish_path_handler]: starting publish path");
         drivepath_pub_.publish(hectorMoveBaseInterface->getCurrentActionPath());
         return hector_move_base::NEXT;
+    }
+
+    void abort()
+    {
+
     }
 };
 }

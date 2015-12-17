@@ -15,7 +15,8 @@
 
 namespace hector_move_base_handler {
 
-class HectorStuckRecoveryHandler : public HectorMoveBaseHandler {
+class HectorStuckRecoveryHandler : public HectorMoveBaseHandler
+{
 private:
     costmap_2d::Costmap2DROS* costmap_;
     tf::TransformListener& tf_;
@@ -40,8 +41,8 @@ public:
     HectorStuckRecoveryHandler(hector_move_base::IHectorMoveBase* interface) :
         HectorMoveBaseHandler(interface),
         costmap_(interface->getCostmap()),
-        tf_(interface->getTransformListener()) {
-
+        tf_(interface->getTransformListener())
+    {
         ros::NodeHandle nh;
 
         inverse_trajectory_service_client_ = nh.serviceClient<hector_nav_msgs::GetRecoveryInfo>("trajectory_recovery_info");
@@ -66,13 +67,13 @@ public:
 
         ROS_INFO("                   Running inverse trajectory recovery");
 
-        if (counter > 4) {
+        if (counter > 4)
+        {
             reset();
             return hector_move_base::FAIL;
         }
-        else {
+        else
             counter++;
-        }
 
         if(costmap_ == NULL){
             ROS_ERROR("The costmaps passed to the ClearCostmapRecovery object cannot be NULL. Doing nothing.");
@@ -101,47 +102,25 @@ public:
         target_path_goal_.goal_id.id = "inverse trajectory trajectory";
         target_path_goal_.goal_id.stamp = curr_time;
 
-        if (false){
-            hector_move_base_msgs::MoveBasePath target_path;
-            target_path.target_path = trajectory_info.response.trajectory_radius_entry_pose_to_req_pose;
-            hector_move_base_msgs::setAction(target_path_goal_, target_path);
-        }else{
-            hector_move_base_msgs::MoveBaseGoal target_goal;
-            target_goal.target_pose = trajectory_info.response.radius_entry_pose;
-            target_goal.target_pose.header.stamp = trajectory_info.response.trajectory_radius_entry_pose_to_req_pose.header.stamp;
-            inv_traj_back_pose_pub_.publish(target_goal.target_pose);
-            hector_move_base_msgs::setAction(target_path_goal_, target_goal);
-        }
+        hector_move_base_msgs::MoveBaseGoal target_goal;
+        target_goal.target_pose = trajectory_info.response.radius_entry_pose;
+        target_goal.target_pose.header.stamp = trajectory_info.response.trajectory_radius_entry_pose_to_req_pose.header.stamp;
+        inv_traj_back_pose_pub_.publish(target_goal.target_pose);
+        hector_move_base_msgs::setAction(target_path_goal_, target_goal);
 
         path_pub_.publish(target_path_goal_);
 
         //@TODO HACK
         sleep(5);
         return hector_move_base::NEXT;
-
-        while (1){
-            while (!condition_path_ready_.timed_wait(lock, ros::Duration(1.0).toBoost())){
-                if ((ros::Time::now() - curr_time) > ros::Duration(30.0)){
-                    ROS_WARN("Failed inverse trajectory recovery after X seconds");
-                    return hector_move_base::FAIL;
-                }
-            }
-
-            if (target_path_result_.status.status == actionlib_msgs::GoalStatus::SUCCEEDED){
-                ROS_INFO("Recovery successful");
-                return hector_move_base::NEXT;
-            }else if (target_path_result_.status.status != actionlib_msgs::GoalStatus::ACTIVE){
-                ROS_INFO("Recovery aborted, cause: %s",target_path_result_.status.text.c_str() );
-                return hector_move_base::NEXT;
-            }
-        }
-
-        ROS_INFO("This should never be reached");
-
-        return hector_move_base::FAIL;
     }
 
-    void reset() {
+    void abort()
+    {
+    }
+
+    void reset()
+    {
         counter = 0;
     }
 

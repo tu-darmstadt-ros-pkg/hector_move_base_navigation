@@ -62,7 +62,7 @@ public:
         }
         catch (const pluginlib::PluginlibException& ex) {
             ROS_FATAL("Failed to create the %s planner, are you sure it is properly registered and that the containing library is built? Exception: %s", path_planner.c_str(), ex.what());
-            exit(0);
+            exit(1);
         }
         ROS_DEBUG("[refine_plan_handler]: constructed successfully");
     }

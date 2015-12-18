@@ -13,6 +13,9 @@ rosbuild_init()
 
 rosbuild_add_boost_directories()
 
+add_definitions("-Wall")
+add_definitions("-std=c++11")
+
 # hector_move_base
 rosbuild_add_executable(bin/hector_move_base src/hector_move_base.cpp src/hector_move_base_state_machine.cpp)
 rosbuild_link_boost(bin/hector_move_base system)

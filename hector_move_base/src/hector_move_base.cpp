@@ -25,100 +25,6 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
 
   ROS_DEBUG("[hector_move_base] Costmap loaded");
 
-  exploringState_.reset(new hector_move_base_handler::HectorExplorationHandler(this));
-  planningState_.reset(new hector_move_base_handler::HectorPlanningHandler(this));
-  refinePlanState_.reset(new hector_move_base_handler::HectorRefinePlanHandler(this));
-  publishPathState_.reset(new hector_move_base_handler::HectorPublishPathHandler(this));
-  publishFeedbackState_.reset(new hector_move_base_handler::HectorPublishFeedbackHandler(this));
-  publishSuccessState_.reset(new hector_move_base_handler::HectorPublishSuccessHandler(this));
-  publishAbortState_.reset(new hector_move_base_handler::HectorPublishAbortHandler(this));
-  publishPreemptedState_.reset(new hector_move_base_handler::HectorPublishPreemptedHandler(this));
-  publishRejectedState_.reset(new hector_move_base_handler::HectorPublishRejectedHandler(this));
-  waitForReplanningState_.reset(new hector_move_base_handler::HectorWaitForReplanningHandler(this));
-  waitForReexploringState_.reset(new hector_move_base_handler::HectorWaitForReexploringHandler(this));
-  stuckExplorationRecoveryState_.reset(new hector_move_base_handler::HectorStuckRecoveryHandler(this));
-  stuckPlanningRecoveryState_.reset(new hector_move_base_handler::HectorStuckRecoveryHandler(this));
-  idleState_.reset(new hector_move_base_handler::HectorIdleHandler(this));
-
-  ROS_DEBUG("[hector_move_base] All states created");
-
-  std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForExploration;
-  mappingForExploration.insert(std::make_pair(NEXT, planningState_));
-  if (use_alternate_planner_)
-    mappingForExploration.insert(std::make_pair(ALTERNATIVE, refinePlanState_));
-  else
-    mappingForExploration.insert(std::make_pair(ALTERNATIVE, publishPathState_));
-  mappingForExploration.insert(std::make_pair(FAIL, stuckExplorationRecoveryState_));
-  statemachine_->addHandlerMapping(exploringState_, mappingForExploration);
-
-  std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPlanning;
-  if (use_alternate_planner_)
-    mappingForPlanning.insert(std::make_pair(NEXT, refinePlanState_));
-  else
-    mappingForPlanning.insert(std::make_pair(NEXT, publishPathState_));
-  mappingForPlanning.insert(std::make_pair(ALTERNATIVE, exploringState_));
-  mappingForPlanning.insert(std::make_pair(FAIL, stuckPlanningRecoveryState_));
-  statemachine_->addHandlerMapping(planningState_, mappingForPlanning);
-
-  std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForRefinePlan;
-  mappingForRefinePlan.insert(std::make_pair(NEXT, publishPathState_));
-  mappingForRefinePlan.insert(std::make_pair(ALTERNATIVE, planningState_));
-  mappingForRefinePlan.insert(std::make_pair(FAIL, stuckPlanningRecoveryState_));
-  statemachine_->addHandlerMapping(refinePlanState_, mappingForRefinePlan);
-
-  std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPublishPath;
-  mappingForPublishPath.insert(std::make_pair(NEXT, publishFeedbackState_));
-  statemachine_->addHandlerMapping(publishPathState_, mappingForPublishPath);
-
-  std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPublishFeedback;
-  mappingForPublishFeedback.insert(std::make_pair(NEXT, waitForReplanningState_));
-  statemachine_->addHandlerMapping(publishFeedbackState_, mappingForPublishFeedback);
-
-  std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForWaitForReplanning;
-  mappingForWaitForReplanning.insert(std::make_pair(NEXT, waitForReexploringState_));
-  mappingForWaitForReplanning.insert(std::make_pair(ALTERNATIVE, planningState_));
-  statemachine_->addHandlerMapping(waitForReplanningState_, mappingForWaitForReplanning);
-
-  std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForWaitForReexploring;
-  mappingForWaitForReexploring.insert(std::make_pair(NEXT, publishFeedbackState_));
-  mappingForWaitForReexploring.insert(std::make_pair(ALTERNATIVE, exploringState_));
-  statemachine_->addHandlerMapping(waitForReexploringState_, mappingForWaitForReexploring);
-
-  std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPublishSuccess;
-  mappingForPublishSuccess.insert(std::make_pair(NEXT, idleState_));
-  statemachine_->addHandlerMapping(publishSuccessState_, mappingForPublishSuccess);
-
-  std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPublishAbort;
-  mappingForPublishAbort.insert(std::make_pair(NEXT, idleState_));
-  statemachine_->addHandlerMapping(publishAbortState_, mappingForPublishAbort);
-
-  std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPublishPreempted;
-  mappingForPublishPreempted.insert(std::make_pair(NEXT, idleState_));
-  statemachine_->addHandlerMapping(publishPreemptedState_, mappingForPublishPreempted);
-
-  std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPublishRejected;
-  mappingForPublishRejected.insert(std::make_pair(NEXT, idleState_));
-  statemachine_->addHandlerMapping(publishRejectedState_, mappingForPublishRejected);
-
-  std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForExplorationStuckRecovery;
-  mappingForExplorationStuckRecovery.insert(std::make_pair(NEXT, exploringState_));
-  mappingForExplorationStuckRecovery.insert(std::make_pair(FAIL, publishAbortState_));
-  statemachine_->addHandlerMapping(stuckExplorationRecoveryState_, mappingForExplorationStuckRecovery);
-
-  std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPlanningStuckRecovery;
-  mappingForPlanningStuckRecovery.insert(std::make_pair(NEXT, planningState_));
-  mappingForPlanningStuckRecovery.insert(std::make_pair(FAIL, publishAbortState_));
-  statemachine_->addHandlerMapping(stuckPlanningRecoveryState_, mappingForPlanningStuckRecovery);
-
-  std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForIdleState;
-  mappingForIdleState.insert(std::make_pair(NEXT, idleState_));
-  statemachine_->addHandlerMapping(idleState_, mappingForIdleState);
-
-  ROS_DEBUG("[hector_move_base] Statemachine mapping created");
-
-  startState_ = exploringState_;
-  currentState_ = idleState_;
-  nextState_ = currentState_;
   path_ = hector_move_base_msgs::MoveBaseActionPath();
 
   ros::NodeHandle controller_nh(controller_namespace_);
@@ -146,6 +52,106 @@ HectorMoveBase::~HectorMoveBase()
 {
     if(costmap_ != NULL)
         delete costmap_;
+}
+
+void HectorMoveBase::setupStateMachine()
+{
+    exploringState_.reset(new hector_move_base_handler::HectorExplorationHandler(this));
+    planningState_.reset(new hector_move_base_handler::HectorPlanningHandler(this));
+    refinePlanState_.reset(new hector_move_base_handler::HectorRefinePlanHandler(this));
+    publishPathState_.reset(new hector_move_base_handler::HectorPublishPathHandler(this));
+    publishFeedbackState_.reset(new hector_move_base_handler::HectorPublishFeedbackHandler(this));
+    publishSuccessState_.reset(new hector_move_base_handler::HectorPublishSuccessHandler(this));
+    publishAbortState_.reset(new hector_move_base_handler::HectorPublishAbortHandler(this));
+    publishPreemptedState_.reset(new hector_move_base_handler::HectorPublishPreemptedHandler(this));
+    publishRejectedState_.reset(new hector_move_base_handler::HectorPublishRejectedHandler(this));
+    waitForReplanningState_.reset(new hector_move_base_handler::HectorWaitForReplanningHandler(this));
+    waitForReexploringState_.reset(new hector_move_base_handler::HectorWaitForReexploringHandler(this));
+    stuckExplorationRecoveryState_.reset(new hector_move_base_handler::HectorStuckRecoveryHandler(this));
+    stuckPlanningRecoveryState_.reset(new hector_move_base_handler::HectorStuckRecoveryHandler(this));
+    idleState_.reset(new hector_move_base_handler::HectorIdleHandler(this));
+
+    ROS_DEBUG("[hector_move_base] All states created");
+
+    std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForExploration;
+    mappingForExploration.insert(std::make_pair(NEXT, planningState_));
+    if (use_alternate_planner_)
+      mappingForExploration.insert(std::make_pair(ALTERNATIVE, refinePlanState_));
+    else
+      mappingForExploration.insert(std::make_pair(ALTERNATIVE, publishPathState_));
+    mappingForExploration.insert(std::make_pair(FAIL, stuckExplorationRecoveryState_));
+    statemachine_->addHandlerMapping(exploringState_, mappingForExploration);
+
+    std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPlanning;
+    if (use_alternate_planner_)
+      mappingForPlanning.insert(std::make_pair(NEXT, refinePlanState_));
+    else
+      mappingForPlanning.insert(std::make_pair(NEXT, publishPathState_));
+    mappingForPlanning.insert(std::make_pair(ALTERNATIVE, exploringState_));
+    mappingForPlanning.insert(std::make_pair(FAIL, stuckPlanningRecoveryState_));
+    statemachine_->addHandlerMapping(planningState_, mappingForPlanning);
+
+    std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForRefinePlan;
+    mappingForRefinePlan.insert(std::make_pair(NEXT, publishPathState_));
+    mappingForRefinePlan.insert(std::make_pair(ALTERNATIVE, planningState_));
+    mappingForRefinePlan.insert(std::make_pair(FAIL, stuckPlanningRecoveryState_));
+    statemachine_->addHandlerMapping(refinePlanState_, mappingForRefinePlan);
+
+    std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPublishPath;
+    mappingForPublishPath.insert(std::make_pair(NEXT, publishFeedbackState_));
+    statemachine_->addHandlerMapping(publishPathState_, mappingForPublishPath);
+
+    std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPublishFeedback;
+    mappingForPublishFeedback.insert(std::make_pair(NEXT, waitForReplanningState_));
+    statemachine_->addHandlerMapping(publishFeedbackState_, mappingForPublishFeedback);
+
+    std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForWaitForReplanning;
+    mappingForWaitForReplanning.insert(std::make_pair(NEXT, waitForReexploringState_));
+    mappingForWaitForReplanning.insert(std::make_pair(ALTERNATIVE, planningState_));
+    statemachine_->addHandlerMapping(waitForReplanningState_, mappingForWaitForReplanning);
+
+    std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForWaitForReexploring;
+    mappingForWaitForReexploring.insert(std::make_pair(NEXT, publishFeedbackState_));
+    mappingForWaitForReexploring.insert(std::make_pair(ALTERNATIVE, exploringState_));
+    statemachine_->addHandlerMapping(waitForReexploringState_, mappingForWaitForReexploring);
+
+    std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPublishSuccess;
+    mappingForPublishSuccess.insert(std::make_pair(NEXT, idleState_));
+    statemachine_->addHandlerMapping(publishSuccessState_, mappingForPublishSuccess);
+
+    std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPublishAbort;
+    mappingForPublishAbort.insert(std::make_pair(NEXT, idleState_));
+    statemachine_->addHandlerMapping(publishAbortState_, mappingForPublishAbort);
+
+    std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPublishPreempted;
+    mappingForPublishPreempted.insert(std::make_pair(NEXT, idleState_));
+    statemachine_->addHandlerMapping(publishPreemptedState_, mappingForPublishPreempted);
+
+    std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPublishRejected;
+    mappingForPublishRejected.insert(std::make_pair(NEXT, idleState_));
+    statemachine_->addHandlerMapping(publishRejectedState_, mappingForPublishRejected);
+
+    std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForExplorationStuckRecovery;
+    mappingForExplorationStuckRecovery.insert(std::make_pair(NEXT, exploringState_));
+    mappingForExplorationStuckRecovery.insert(std::make_pair(FAIL, publishAbortState_));
+    statemachine_->addHandlerMapping(stuckExplorationRecoveryState_, mappingForExplorationStuckRecovery);
+
+    std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPlanningStuckRecovery;
+    mappingForPlanningStuckRecovery.insert(std::make_pair(NEXT, planningState_));
+    mappingForPlanningStuckRecovery.insert(std::make_pair(FAIL, publishAbortState_));
+    statemachine_->addHandlerMapping(stuckPlanningRecoveryState_, mappingForPlanningStuckRecovery);
+
+    std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForIdleState;
+    mappingForIdleState.insert(std::make_pair(NEXT, idleState_));
+    statemachine_->addHandlerMapping(idleState_, mappingForIdleState);
+
+    ROS_DEBUG("[hector_move_base] Statemachine mapping created");
+
+    startState_ = exploringState_;
+    currentState_ = idleState_;
+    nextState_ = currentState_;
+
+    ROS_DEBUG("[hector_move_base] Statemachine initialized");
 }
 
 handlerActionGoal HectorMoveBase::getGlobalGoal() {
@@ -237,90 +243,6 @@ costmap_2d::Costmap2DROS* HectorMoveBase::getCostmap() {
 
 tf::TransformListener& HectorMoveBase::getTransformListener() {
   return tf_;
-}
-
-bool HectorMoveBase::loadMoveBasePlugins(ros::NodeHandle node){
-  XmlRpc::XmlRpcValue behavior_list;
-  if(node.getParam("recovery_behaviors", behavior_list)){
-    if(behavior_list.getType() == XmlRpc::XmlRpcValue::TypeArray){
-      for(int i = 0; i < behavior_list.size(); ++i){
-        if(behavior_list[i].getType() == XmlRpc::XmlRpcValue::TypeStruct){
-          if(behavior_list[i].hasMember("name") && behavior_list[i].hasMember("type")){
-            //check for recovery behaviors with the same name
-            for(int j = i + 1; j < behavior_list.size(); j++){
-              if(behavior_list[j].getType() == XmlRpc::XmlRpcValue::TypeStruct){
-                if(behavior_list[j].hasMember("name") && behavior_list[j].hasMember("type")){
-                  std::string name_i = behavior_list[i]["name"];
-                  std::string name_j = behavior_list[j]["name"];
-                  if(name_i == name_j){
-                    ROS_ERROR("A recovery behavior with the name %s already exists, this is not allowed. Using the default recovery behaviors instead.",
-                              name_i.c_str());
-                    return false;
-                  }
-                }
-              }
-            }
-          }
-          else{
-            ROS_ERROR("Recovery behaviors must have a name and a type and this does not. Using the default recovery behaviors instead.");
-            return false;
-          }
-        }
-        else{
-          ROS_ERROR("Recovery behaviors must be specified as maps, but they are XmlRpcType %d. We'll use the default recovery behaviors instead.",
-                    behavior_list[i].getType());
-          return false;
-        }
-      }
-
-      //if we've made it to this point, we know that the list is legal so we'll create all the recovery behaviors
-      for(int i = 0; i < behavior_list.size(); ++i){
-        try{
-          //check if a non fully qualified name has potentially been passed in
-          if(!move_base_plugin_loader_.isClassAvailable(behavior_list[i]["type"])){
-            std::vector<std::string> classes = move_base_plugin_loader_.getDeclaredClasses();
-            for(unsigned int i = 0; i < classes.size(); ++i){
-              if(behavior_list[i]["type"] == move_base_plugin_loader_.getName(classes[i])){
-                //if we've found a match... we'll get the fully qualified name and break out of the loop
-                ROS_WARN("Recovery behavior specifications should now include the package name. You are using a deprecated API. Please switch from %s to %s in your yaml file.",
-                         std::string(behavior_list[i]["type"]).c_str(), classes[i].c_str());
-                behavior_list[i]["type"] = classes[i];
-                break;
-              }
-            }
-          }
-
-          boost::shared_ptr<nav_core::RecoveryBehavior> behavior(move_base_plugin_loader_.createInstance(behavior_list[i]["type"]));
-
-          //shouldn't be possible, but it won't hurt to check
-          if(behavior.get() == NULL){
-            ROS_ERROR("The ClassLoader returned a null pointer without throwing an exception. This should not happen");
-            return false;
-          }
-
-          //initialize the recovery behavior with its name
-          behavior->initialize(behavior_list[i]["name"], &tf_, costmap_, costmap_);
-          move_base_plugins_.push_back(behavior);
-        }
-        catch(pluginlib::PluginlibException& ex){
-          ROS_ERROR("Failed to load a plugin. Using default recovery behaviors. Error: %s", ex.what());
-          return false;
-        }
-      }
-    }
-    else{
-      ROS_ERROR("The recovery behavior specification must be a list, but is of XmlRpcType %d. We'll use the default recovery behaviors instead.",
-                behavior_list.getType());
-      return false;
-    }
-  }
-  else{
-    //if no recovery_behaviors are specified, we'll just load the defaults
-    return false;
-  }
-
-  //if we've made it here... we've constructed a recovery behavior list successfully
-  return true;
 }
 
 //we'll load our default recovery behaviors here

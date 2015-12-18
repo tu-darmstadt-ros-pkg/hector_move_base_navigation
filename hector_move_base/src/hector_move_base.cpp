@@ -175,17 +175,19 @@ void HectorMoveBase::popCurrentGoal()
   goals_.pop_back();
 }
 
-void HectorMoveBase::pushCurrentGoal(const handlerActionGoal &goalToAdd) {
-  goals_.push_back(goalToAdd);
+void HectorMoveBase::pushCurrentGoal(const handlerActionGoal & goal)
+{
+  goals_.push_back(goal);
+
   visualization_msgs::Marker marker;
-  marker.header.frame_id = goalToAdd.target_pose.header.frame_id;
-  marker.header.stamp = goalToAdd.goal_id.stamp;
+  marker.header.frame_id = goal.target_pose.header.frame_id;
+  marker.header.stamp = goal.goal_id.stamp;
   marker.ns = "hector_move_base";
   marker.id = 0;
   marker.type = visualization_msgs::Marker::ARROW;
   marker.action = visualization_msgs::Marker::ADD;
 
-  marker.pose = goalToAdd.target_pose.pose;
+  marker.pose = goal.target_pose.pose;
 
   marker.scale.x = 0.15;
   marker.scale.y = 0.05;
@@ -528,14 +530,18 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
         return;
       }
       // if result id equals current goal but not global goal
-      if (isGoalIDEqual(current_action_path.goal_id, result->status.goal_id)) {
+      if (isGoalIDEqual(current_action_path.goal_id, result->status.goal_id))
+      {
         ROS_DEBUG("[hector_move_base]: number of goals: %lu", goals_.size());
-        double diff_x = fabs(current_action_path.goal.target_path.poses.back().pose.position.x - global_goal.target_pose.pose.position.x);
-        double diff_y = fabs(current_action_path.goal.target_path.poses.back().pose.position.y - global_goal.target_pose.pose.position.y);
-        if ((pow(diff_x, 2) + pow(diff_y, 2)) < pow(goalReachedRadius_, 2)) {
-          ROS_INFO("[hector_move_base]: path was followed to the end. path goal is close enough to global_goal");
-          successGoal();
-          return;
+        if(current_action_path.goal.target_path.poses.size() > 0)
+        {
+            double diff_x = fabs(current_action_path.goal.target_path.poses.back().pose.position.x - global_goal.target_pose.pose.position.x);
+            double diff_y = fabs(current_action_path.goal.target_path.poses.back().pose.position.y - global_goal.target_pose.pose.position.y);
+            if ((pow(diff_x, 2) + pow(diff_y, 2)) < pow(goalReachedRadius_, 2)) {
+              ROS_INFO("[hector_move_base]: path was followed to the end. path goal is close enough to global_goal");
+              successGoal();
+              return;
+            }
         }
         setNextState(planningState_);
         ROS_INFO("[hector_move_base]: start planning, last path was followed to the end");

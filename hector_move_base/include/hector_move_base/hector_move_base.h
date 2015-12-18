@@ -47,9 +47,9 @@ class HectorMoveBase : public IHectorMoveBase
 private:
     costmap_2d::Costmap2DROS* costmap_;
     ros::NodeHandle nh_, private_nh_;
-    boost::shared_ptr<HectorMoveBaseStateMachine> statemachine_;
     tf::TransformListener& tf_;
 
+    boost::shared_ptr<HectorMoveBaseStateMachine> statemachine_;
     boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> idleState_;
     boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> exploringState_, planningState_, refinePlanState_, publishPathState_, publishFeedbackState_, waitForReplanningState_, waitForReexploringState_;
     boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> publishSuccessState_, publishAbortState_, publishPreemptedState_, publishRejectedState_;
@@ -71,6 +71,8 @@ private:
     bool use_exploring_;
 
 protected:
+    void setupStateMachine();
+
     actionlib::SimpleActionServer<hector_move_base_msgs::MoveBaseAction> action_server_;
 
 public:
@@ -105,7 +107,6 @@ public:
     void moveBaseStep();
 
 private:
-    bool loadMoveBasePlugins(ros::NodeHandle node);
     void loadDefaultMoveBasePlugins();
 
     /**

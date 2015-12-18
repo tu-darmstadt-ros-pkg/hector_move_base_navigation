@@ -4,6 +4,10 @@ cmake_minimum_required(VERSION 2.8.3)
 project(hector_move_base)
 # Load catkin and all dependencies required for this package
 # TODO: remove all from COMPONENTS that are not catkin packages.
+
+add_definitions("-Wall")
+add_definitions("-std=c++11")
+
 find_package(catkin REQUIRED COMPONENTS actionlib_msgs monstertruck_msgs move_base_msgs sensor_msgs nav_core hector_move_base_msgs hector_nav_core hector_nav_msgs_tools std_msgs hector_exploration_planner inverse_trajectory_recovery hector_nav_core_exploration_plugin sbpl_lattice_planner)
 
 find_package(Boost REQUIRED COMPONENTS system)

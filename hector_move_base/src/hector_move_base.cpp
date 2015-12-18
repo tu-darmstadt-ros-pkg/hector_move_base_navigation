@@ -1,13 +1,14 @@
 #include <hector_move_base/hector_move_base.h>
 
-namespace hector_move_base {
+namespace hector_move_base
+{
 
 HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     costmap_(NULL),
     nh_(""),
     private_nh_("~"),
-    statemachine_(new HectorMoveBaseStateMachine),
     tf_(tf),
+    statemachine_(new HectorMoveBaseStateMachine),
     move_base_plugin_loader_("nav_core", "nav_core::RecoveryBehavior"),
     action_server_(nh_, name, false)
 {
@@ -22,6 +23,41 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
 
     ROS_DEBUG("[hector_move_base] Costmap loaded");
 
+    setupStateMachine();
+
+    goal_id_counter_ = 0;
+
+    path_ = hector_move_base_msgs::MoveBaseActionPath();
+
+    ros::NodeHandle controller_nh(controller_namespace_);
+
+    drivepath_pub_ = controller_nh.advertise<hector_move_base_msgs::MoveBaseActionPath>("path", 0 );
+    goalmarker_pub_ = private_nh_.advertise<visualization_msgs::Marker>("goal_marker", 0);
+
+//    explore_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionExplore>("explore", 1, boost::bind(&HectorMoveBase::exploreCB, this, _1));
+//    goal_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionGoal>("goal", 1, boost::bind(&HectorMoveBase::goalCB, this, _1));
+//    observation_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionGoal>("observe", 1, boost::bind(&HectorMoveBase::observationCB, this, _1));
+    simple_goal_sub_ = private_nh_.subscribe<geometry_msgs::PoseStamped>("simple_goal", 1, boost::bind(&HectorMoveBase::simple_goalCB, this, _1));
+//    cancel_sub_ = private_nh_.subscribe<std_msgs::Empty>("cancel", 1, boost::bind(&HectorMoveBase::cancelCB, this, _1));
+    syscommand_sub_ = nh_.subscribe<std_msgs::String>("syscommand", 1, boost::bind(&HectorMoveBase::syscommandCB, this, _1));
+
+    controller_result_sub_ = controller_nh.subscribe<hector_move_base_msgs::MoveBaseActionResult>("result", 1, boost::bind(&HectorMoveBase::controllerResultCB, this, _1));
+
+    tolerance_client_ = controller_nh.serviceClient<monstertruck_msgs::SetAlternativeTolerance>("set_alternative_tolerances");
+
+    action_server_.registerGoalCallback(boost::bind(&HectorMoveBase::asGoalCB, this));
+    action_server_.registerPreemptCallback(boost::bind(&HectorMoveBase::asCancelCB, this));
+    action_server_.start();
+}
+
+HectorMoveBase::~HectorMoveBase()
+{
+    if(costmap_ != NULL)
+        delete costmap_;
+}
+
+void HectorMoveBase::setupStateMachine()
+{
     exploringState_.reset(new hector_move_base_handler::HectorExplorationHandler(this));
     planningState_.reset(new hector_move_base_handler::HectorPlanningHandler(this));
     refinePlanState_.reset(new hector_move_base_handler::HectorRefinePlanHandler(this));
@@ -114,41 +150,13 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     mappingForIdleState.insert(std::make_pair(NEXT, idleState_));
     statemachine_->addHandlerMapping(idleState_, mappingForIdleState);
 
-    ROS_DEBUG("[hector_move_base] Statemachine mapping created.");
+    ROS_DEBUG("[hector_move_base] State machine mapping created");
 
-    goal_id_counter_ = 0;
     startState_ = exploringState_;
     currentState_ = idleState_;
     nextState_ = currentState_;
-    path_ = hector_move_base_msgs::MoveBaseActionPath();
 
-    ros::NodeHandle controller_nh(controller_namespace_);
-
-    drivepath_pub_ = controller_nh.advertise<hector_move_base_msgs::MoveBaseActionPath>("path", 0 );
-    goalmarker_pub_ = private_nh_.advertise<visualization_msgs::Marker>("goal_marker", 0);
-
-//    explore_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionExplore>("explore", 1, boost::bind(&HectorMoveBase::exploreCB, this, _1));
-//    goal_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionGoal>("goal", 1, boost::bind(&HectorMoveBase::goalCB, this, _1));
-//    observation_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionGoal>("observe", 1, boost::bind(&HectorMoveBase::observationCB, this, _1));
-    simple_goal_sub_ = private_nh_.subscribe<geometry_msgs::PoseStamped>("simple_goal", 1, boost::bind(&HectorMoveBase::simple_goalCB, this, _1));
-//    cancel_sub_ = private_nh_.subscribe<std_msgs::Empty>("cancel", 1, boost::bind(&HectorMoveBase::cancelCB, this, _1));
-    syscommand_sub_ = nh_.subscribe<std_msgs::String>("syscommand", 1, boost::bind(&HectorMoveBase::syscommandCB, this, _1));
-
-    controller_result_sub_ = controller_nh.subscribe<hector_move_base_msgs::MoveBaseActionResult>("result", 1, boost::bind(&HectorMoveBase::controllerResultCB, this, _1));
-
-    tolerance_client_ = controller_nh.serviceClient<monstertruck_msgs::SetAlternativeTolerance>("set_alternative_tolerances");
-
-    action_server_.registerGoalCallback(boost::bind(&HectorMoveBase::asGoalCB, this));
-    action_server_.registerPreemptCallback(boost::bind(&HectorMoveBase::asCancelCB, this));
-    action_server_.start();
-
-    actionlib::SimpleActionClient<hector_move_base_msgs::MoveBaseAction> action_client("UNBEKANNT", true);
-}
-
-HectorMoveBase::~HectorMoveBase()
-{
-    if(costmap_ != NULL)
-        delete costmap_;
+    ROS_DEBUG("[hector_move_base] Statemachine initialized");
 }
 
 handlerActionGoal HectorMoveBase::getGlobalGoal() {
@@ -245,90 +253,6 @@ costmap_2d::Costmap2DROS* HectorMoveBase::getCostmap() {
 
 tf::TransformListener& HectorMoveBase::getTransformListener() {
     return tf_;
-}
-
-bool HectorMoveBase::loadMoveBasePlugins(ros::NodeHandle node) {
-  XmlRpc::XmlRpcValue behavior_list;
-  if(node.getParam("recovery_behaviors", behavior_list)){
-    if(behavior_list.getType() == XmlRpc::XmlRpcValue::TypeArray){
-      for(int i = 0; i < behavior_list.size(); ++i){
-        if(behavior_list[i].getType() == XmlRpc::XmlRpcValue::TypeStruct){
-          if(behavior_list[i].hasMember("name") && behavior_list[i].hasMember("type")){
-            //check for recovery behaviors with the same name
-            for(int j = i + 1; j < behavior_list.size(); j++){
-              if(behavior_list[j].getType() == XmlRpc::XmlRpcValue::TypeStruct){
-                if(behavior_list[j].hasMember("name") && behavior_list[j].hasMember("type")){
-                  std::string name_i = behavior_list[i]["name"];
-                  std::string name_j = behavior_list[j]["name"];
-                  if(name_i == name_j){
-                    ROS_ERROR("A recovery behavior with the name %s already exists, this is not allowed. Using the default recovery behaviors instead.",
-                        name_i.c_str());
-                    return false;
-                  }
-                }
-              }
-            }
-          }
-          else{
-            ROS_ERROR("Recovery behaviors must have a name and a type and this does not. Using the default recovery behaviors instead.");
-            return false;
-          }
-        }
-        else{
-          ROS_ERROR("Recovery behaviors must be specified as maps, but they are XmlRpcType %d. We'll use the default recovery behaviors instead.",
-              behavior_list[i].getType());
-          return false;
-        }
-      }
-
-      //if we've made it to this point, we know that the list is legal so we'll create all the recovery behaviors
-      for(int i = 0; i < behavior_list.size(); ++i){
-        try{
-          //check if a non fully qualified name has potentially been passed in
-          if(!move_base_plugin_loader_.isClassAvailable(behavior_list[i]["type"])){
-            std::vector<std::string> classes = move_base_plugin_loader_.getDeclaredClasses();
-            for(unsigned int i = 0; i < classes.size(); ++i){
-              if(behavior_list[i]["type"] == move_base_plugin_loader_.getName(classes[i])){
-                //if we've found a match... we'll get the fully qualified name and break out of the loop
-                ROS_WARN("Recovery behavior specifications should now include the package name. You are using a deprecated API. Please switch from %s to %s in your yaml file.",
-                    std::string(behavior_list[i]["type"]).c_str(), classes[i].c_str());
-                behavior_list[i]["type"] = classes[i];
-                break;
-              }
-            }
-          }
-
-          boost::shared_ptr<nav_core::RecoveryBehavior> behavior(move_base_plugin_loader_.createInstance(behavior_list[i]["type"]));
-
-          //shouldn't be possible, but it won't hurt to check
-          if(behavior.get() == NULL){
-            ROS_ERROR("The ClassLoader returned a null pointer without throwing an exception. This should not happen");
-            return false;
-          }
-
-          //initialize the recovery behavior with its name
-          behavior->initialize(behavior_list[i]["name"], &tf_, costmap_, costmap_);
-          move_base_plugins_.push_back(behavior);
-        }
-        catch(pluginlib::PluginlibException& ex){
-          ROS_ERROR("Failed to load a plugin. Using default recovery behaviors. Error: %s", ex.what());
-          return false;
-        }
-      }
-    }
-    else{
-      ROS_ERROR("The recovery behavior specification must be a list, but is of XmlRpcType %d. We'll use the default recovery behaviors instead.",
-          behavior_list.getType());
-      return false;
-    }
-  }
-  else{
-    //if no recovery_behaviors are specified, we'll just load the defaults
-    return false;
-  }
-
-  //if we've made it here... we've constructed a recovery behavior list successfully
-  return true;
 }
 
 //we'll load our default recovery behaviors here

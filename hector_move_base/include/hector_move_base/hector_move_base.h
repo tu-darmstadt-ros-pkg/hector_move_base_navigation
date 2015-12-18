@@ -91,8 +91,8 @@ public:
     handlerActionGoal getGlobalGoal();
     handlerActionGoal getCurrentGoal();
     void popCurrentGoal();
-    void pushCurrentGoal(const handlerActionGoal&);
-    void sendActionGoal(const handlerActionGoal&);
+    void pushCurrentGoal(const handlerActionGoal&goal);
+    void sendActionGoal(const handlerActionGoal&goal);
 
     hector_move_base_msgs::MoveBaseActionPath getCurrentActionPath();
     void setActionPath (hector_move_base_msgs::MoveBaseActionPath);

@@ -21,9 +21,13 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
   double observe_time_limit;
   private_nh_.param("observe_time_limit", observe_time_limit, 10.0);
 
+  ROS_DEBUG("[hector_move_base] Before Costmap load");
+
   costmap_ = new costmap_2d::Costmap2DROS("global_costmap", tf_);
 
   ROS_DEBUG("[hector_move_base] Costmap loaded");
+
+  setupStateMachine();
 
   path_ = hector_move_base_msgs::MoveBaseActionPath();
 
@@ -571,9 +575,9 @@ void HectorMoveBase::publishStateName(boost::shared_ptr<hector_move_base_handler
 
 void HectorMoveBase::moveBaseStep()
 {
-  std_msgs::String str;
-  str.data = typeid(*currentState_.get()).name();
-  state_name_pub_.publish(str);
+//  std_msgs::String str;
+//  str.data = typeid(*currentState_.get()).name();
+//  state_name_pub_.publish(str);
   RESULT result = currentState_->handle();
 
   if (currentState_ != nextState_)

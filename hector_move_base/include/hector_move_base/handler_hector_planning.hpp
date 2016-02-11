@@ -4,6 +4,7 @@
 #include <hector_nav_core/hector_move_base_handler.h>
 #include <hector_nav_core/exploration_planner.h>
 #include <pluginlib/class_loader.h>
+#include <hector_sbpl_stairs_planner/Path_with_Flipper.h>
 
 namespace hector_move_base_handler {
 
@@ -13,6 +14,10 @@ private:
     costmap_2d::Costmap2DROS* costmap_;
     pluginlib::ClassLoader<hector_nav_core::ExplorationPlanner> expl_loader_;
     boost::shared_ptr<hector_nav_core::ExplorationPlanner> exploration_planner_;
+    pluginlib::ClassLoader<nav_core::BaseGlobalPlanner> bgp_loader_;
+    boost::shared_ptr<nav_core::BaseGlobalPlanner> stairs_planner_;
+//    boost::shared_ptr<hector_sbpl_stairs_planner::> stairs_planner_;
+
 
     bool isGoalIDEqual(const actionlib_msgs::GoalID& firstGoalID, const actionlib_msgs::GoalID& secondGoalID)
     {
@@ -23,6 +28,7 @@ public:
     HectorPlanningHandler(hector_move_base::IHectorMoveBase* interface)
         : HectorMoveBaseHandler(interface),
           expl_loader_("hector_nav_core", "hector_nav_core::ExplorationPlanner")
+        , bgp_loader_("nav_core", "nav_core::BaseGlobalPlanner")
     {
         costmap_ = interface->getCostmap();
         ros::NodeHandle private_nh("~");
@@ -54,6 +60,38 @@ public:
             ROS_FATAL("Failed to create the %s planner, are you sure it is properly registered and that the containing library is built? Exception: %s", exploration_planner_name.c_str(), ex.what());
             exit(1);
         }
+
+
+        // hector_stairs_planner test
+        std::string stairs_planner = "HectorSbplStairsPlanner";
+        private_nh.param("stairs_planner", stairs_planner, stairs_planner);
+
+        try
+        {
+            //check if a non fully qualified name has potentially been passed in
+            if(!bgp_loader_.isClassAvailable(stairs_planner)){
+                std::vector<std::string> classes = bgp_loader_.getDeclaredClasses();
+                for(unsigned int i = 0; i < classes.size(); ++i){
+                    if(stairs_planner == bgp_loader_.getName(classes[i])){
+                        //if we've found a match... we'll get the fully qualified name and break out of the loop
+                        ROS_WARN("Planner specifications should now include the package name. You are using a deprecated API. Please switch from %s to %s in your yaml file.",
+                                 stairs_planner.c_str(), classes[i].c_str());
+                        stairs_planner = classes[i];
+                        break;
+                    }
+                }
+            }
+            stairs_planner_ = bgp_loader_.createInstance(stairs_planner);
+            stairs_planner_->initialize(bgp_loader_.getName(stairs_planner), costmap_);
+        }
+        catch (const pluginlib::PluginlibException& ex)
+        {
+            ROS_FATAL("[move_base] [handler_planning] Failed to create the %s planner. "
+                      "Are you sure it is properly registered and the containing library is built? "
+                      "Exception: %s", stairs_planner.c_str(), ex.what());
+            exit(1);
+        }
+        // ------------------------------------------------------------------------------------
     }
 
     hector_move_base::RESULT handle() {
@@ -84,18 +122,38 @@ public:
         geometry_msgs::PoseStamped start;
         tf::poseStampedTFToMsg(global_pose, start);
 
-        //if the planner fails or returns a zero length plan, planning failed
-        if(!exploration_planner_->makePlan(start, current_goal.target_pose, plan, current_goal.distance) || plan.empty())
+//        //if the planner fails or returns a zero length plan, planning failed
+//        if(!exploration_planner_->makePlan(start, current_goal.target_pose, plan, current_goal.distance) || plan.empty())
+//        {
+//            ROS_INFO("[hector_move_base] [planning_handler] Execution of hector planner failed for goal (%.2f, %.2f)",
+//                     current_goal.target_pose.pose.position.x, current_goal.target_pose.pose.position.y);
+//            if (hectorMoveBaseInterface->getGlobalGoal().do_exploration)
+//            {
+//                ROS_INFO("[hector_move_base] [planning_handler]: In Exploration. Looking for new frontier.");
+//                return hector_move_base::ALTERNATIVE;
+//            }
+//            return hector_move_base::FAIL;
+//        }
+
+        //         ------------------------------------------------------------------------------------
+        //testing sbpl_stairs_planner
+        geometry_msgs::PoseStamped goalForTrajectory = current_goal.target_pose;
+
+        std::vector<geometry_msgs::PoseStamped> trajectory;
+        if(!(stairs_planner_->makePlan(start, goalForTrajectory, trajectory)))
         {
-            ROS_INFO("[hector_move_base] [planning_handler] Execution of hector planner failed for goal (%.2f, %.2f)",
-                     current_goal.target_pose.pose.position.x, current_goal.target_pose.pose.position.y);
-            if (hectorMoveBaseInterface->getGlobalGoal().do_exploration)
-            {
-                ROS_INFO("[hector_move_base] [planning_handler]: In Exploration. Looking for new frontier.");
-                return hector_move_base::ALTERNATIVE;
-            }
+            ROS_WARN("[hector_move_base] [planning_handler]: [sbpl_only] Execution of hector planner failed for goal (%.2f, %.2f)",
+                     goalForTrajectory.pose.position.x, goalForTrajectory.pose.position.y);
+            //            if (hectorMoveBaseInterface->getGlobalGoal().do_exploration)
+            //            {
+            //                ROS_INFO("[planning_handler]: In Exploration. Looking for new frontier.");
+            //                return hector_move_base::ALTERNATIVE;
+            //            }
+            ROS_INFO("Planning with Hector Sbpl Stairs Planner failed");
             return hector_move_base::FAIL;
-        }
+        plan = trajectory;
+        // ------------------------------------------------------------------------------------
+
 
         hector_move_base_msgs::MoveBaseActionPath new_path = hector_move_base_msgs::MoveBaseActionPath();
         new_path.goal_id = current_goal.goal_id;
@@ -117,6 +175,7 @@ public:
         }
 
         return hector_move_base::NEXT;
+        }
     }
 
     void abort()

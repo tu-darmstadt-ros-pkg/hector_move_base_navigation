@@ -24,6 +24,7 @@ footprint_padding: 0.01
 exploration_planner: hector_nav_core_exploration_plugin/HectorNavCoreExplorationPlugin
 global_planner: hector_exploration_planner/HectorExplorationBaseGlobalPlannerPlugin
 path_planner: SBPLLatticePlanner
+stairs_planner: HectorSbplStairsPlanner
 
 recovery_behaviors: [{name: inverse_trajectory_recovery, type: inverse_trajectory_recovery/InverseTrajectoryRecovery}]
 
@@ -33,3 +34,21 @@ SBPLLatticePlanner:
   allocated_time: 3.0
   initial_epsilon: 3.0
   forward_search: false
+  
+HectorSbplStairsPlanner:
+  planner_type: ARAPlanner
+  allocated_time: 30.0
+  initial_epsilon: 15.0
+  environment_type: HectorSBPLFlipperControlEnv
+  forward_search: true 
+  force_scratch_limit: 500
+  nominalvel_mpersecs: 0.4
+  timetoturn45degsinplace_secs: 2.0
+  between_staris_distance_threshold: 3.0
+  same_stairs_distance_threshold: 1.5
+  number_orientaions: 16
+  lethal_obstacle: 100
+  obst_cost_thresh: 20
+  maxFlipperOffsetX: 0.5
+  maxFlipperOffsetY: 0.5
+  pitchTresh: 1.0

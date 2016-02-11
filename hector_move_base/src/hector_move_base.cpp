@@ -10,7 +10,6 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
   tf_(tf),
   move_base_plugin_loader_("nav_core", "nav_core::RecoveryBehavior")
 {
-
   ros::NodeHandle nh;
 
   private_nh_.param("goal_reached_radius", goalReachedRadius_, 0.2);
@@ -42,9 +41,12 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
   syscommand_sub_ = nh.subscribe<std_msgs::String>("syscommand", 1, boost::bind(&HectorMoveBase::syscommandCB, this, _1));
 
   controller_result_sub_ = controller_nh.subscribe<hector_move_base_msgs::MoveBaseActionResult>("result", 1, boost::bind(&HectorMoveBase::controllerResultCB, this, _1));
+  extended_path_sub_ = nh.subscribe("/hector_sbpl_stairs_planner/refinedPlan", 1, &HectorMoveBase::stairsDrivingCB, this);
 
   tolerance_client_ = controller_nh.serviceClient<monstertruck_msgs::SetAlternativeTolerance>("set_alternative_tolerances");
 
+
+  setupStateMachine();
   publishAutonomyLevel("autonomous");
 }
 
@@ -69,6 +71,8 @@ void HectorMoveBase::setupStateMachine()
     waitForReexploringState_.reset(new hector_move_base_handler::HectorWaitForReexploringHandler(this));
     stuckExplorationRecoveryState_.reset(new hector_move_base_handler::HectorStuckRecoveryHandler(this));
     stuckPlanningRecoveryState_.reset(new hector_move_base_handler::HectorStuckRecoveryHandler(this));
+    stairsDrivingState_.reset(new hector_move_base_handler::HectorStairsDrivingHandler(this));
+    flipperActionState_.reset(new hector_move_base_handler::HectorFlipperActionHandler(this));
     idleState_.reset(new hector_move_base_handler::HectorIdleHandler(this));
 
     ROS_DEBUG("[hector_move_base] All states created");
@@ -80,13 +84,14 @@ void HectorMoveBase::setupStateMachine()
     else
       mappingForExploration.insert(std::make_pair(ALTERNATIVE, publishPathState_));
     mappingForExploration.insert(std::make_pair(FAIL, stuckExplorationRecoveryState_));
-    statemachine_->addHandlerMapping(exploringState_, mappingForExploration);
+    statemachine_->addHandlerMapping(exploringState_, mappingForExploration); 
 
     std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForPlanning;
-    if (use_alternate_planner_)
-      mappingForPlanning.insert(std::make_pair(NEXT, refinePlanState_));
-    else
-      mappingForPlanning.insert(std::make_pair(NEXT, publishPathState_));
+//    if (use_alternate_planner_)
+//        mappingForPlanning.insert(std::make_pair(NEXT, refinePlanState_));
+//    else
+//        mappingForPlanning.insert(std::make_pair(NEXT, publishPathState_));
+    mappingForPlanning.insert(std::make_pair(NEXT, stairsDrivingState_));
     mappingForPlanning.insert(std::make_pair(ALTERNATIVE, exploringState_));
     mappingForPlanning.insert(std::make_pair(FAIL, stuckPlanningRecoveryState_));
     statemachine_->addHandlerMapping(planningState_, mappingForPlanning);
@@ -144,6 +149,17 @@ void HectorMoveBase::setupStateMachine()
     std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForIdleState;
     mappingForIdleState.insert(std::make_pair(NEXT, idleState_));
     statemachine_->addHandlerMapping(idleState_, mappingForIdleState);
+
+    std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForStairsDriving;
+    mappingForStairsDriving.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, stairsDrivingState_));
+    mappingForStairsDriving.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(ALTERNATIVE, flipperActionState_));
+    statemachine_->addHandlerMapping(stairsDrivingState_, mappingForStairsDriving);
+
+    std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForFlipperAction;
+    mappingForFlipperAction.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, flipperActionState_));
+    mappingForFlipperAction.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(ALTERNATIVE, stairsDrivingState_));
+    mappingForFlipperAction.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(FAIL, idleState_));
+    statemachine_->addHandlerMapping(flipperActionState_, mappingForFlipperAction);
 
     ROS_DEBUG("[hector_move_base] Statemachine mapping created");
 
@@ -223,6 +239,10 @@ hector_move_base_msgs::MoveBaseActionPath HectorMoveBase::getCurrentActionPath()
   return path_;
 }
 
+hector_sbpl_stairs_planner::Path_with_Flipper HectorMoveBase::getCurrentExtendedPath(){
+    return extended_path_;
+}
+
 void HectorMoveBase::setActionPath (hector_move_base_msgs::MoveBaseActionPath path) {
   ensureActionPathValid(path);
   path_ = path;
@@ -295,6 +315,13 @@ void HectorMoveBase::exploreCB(const hector_move_base_msgs::MoveBaseActionExplor
   pushCurrentGoal(newGoal);
   setNextState(exploringState_);
   return;
+}
+
+void HectorMoveBase::stairsDrivingCB(const hector_sbpl_stairs_planner::Path_with_Flipper &path){
+    ROS_INFO("[hector_move_base]: In stairsDriving callback");
+    extended_path_=path;
+    setNextState(stairsDrivingState_);
+    return;
 }
 
 void HectorMoveBase::goalCB(const hector_move_base_msgs::MoveBaseActionGoal::ConstPtr& goal){
@@ -448,6 +475,11 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
     return;
   }
 
+  if(result->status.goal_id.id.compare(std::string("stairs_driving_path"))==0){
+      setNextState(stairsDrivingState_);
+      return;
+  }
+
   switch (result->status.status) {
     case actionlib_msgs::GoalStatus::ACTIVE:
       ROS_DEBUG("[hector_move_base]: received result from controller == ACTIVE");
@@ -593,7 +625,7 @@ void HectorMoveBase::moveBaseStep()
     default:
       currentState_ = statemachine_->getNextActionForHandler(currentState_, result);
       nextState_ = currentState_;
-      publishStateName(currentState_);
+//      publishStateName(currentState_);
       return;
   }
 }

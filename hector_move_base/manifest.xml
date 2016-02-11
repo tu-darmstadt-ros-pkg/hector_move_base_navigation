@@ -23,6 +23,7 @@
   <depend package="inverse_trajectory_recovery" />
   <depend package="hector_nav_core_exploration_plugin" />
   <depend package="sbpl_lattice_planner" />
+  <depend package="hector_sbpl_stairs_planner" />
 
 </package>
 

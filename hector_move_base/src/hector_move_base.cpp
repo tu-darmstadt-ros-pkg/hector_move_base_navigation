@@ -151,14 +151,14 @@ void HectorMoveBase::setupStateMachine()
     statemachine_->addHandlerMapping(idleState_, mappingForIdleState);
 
     std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForStairsDriving;
-    mappingForStairsDriving.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, stairsDrivingState_));
-    mappingForStairsDriving.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(ALTERNATIVE, flipperActionState_));
+    mappingForStairsDriving.insert(std::make_pair(NEXT, stairsDrivingState_));
+    mappingForStairsDriving.insert(std::make_pair(ALTERNATIVE, flipperActionState_));
     statemachine_->addHandlerMapping(stairsDrivingState_, mappingForStairsDriving);
 
     std::map<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> > mappingForFlipperAction;
-    mappingForFlipperAction.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(NEXT, flipperActionState_));
-    mappingForFlipperAction.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(ALTERNATIVE, stairsDrivingState_));
-    mappingForFlipperAction.insert(std::pair<RESULT, boost::shared_ptr<hector_move_base_handler::HectorMoveBaseHandler> >(FAIL, idleState_));
+    mappingForFlipperAction.insert(std::make_pair(NEXT, flipperActionState_));
+    mappingForFlipperAction.insert(std::make_pair(ALTERNATIVE, stairsDrivingState_));
+    mappingForFlipperAction.insert(std::make_pair(FAIL, idleState_));
     statemachine_->addHandlerMapping(flipperActionState_, mappingForFlipperAction);
 
     ROS_DEBUG("[hector_move_base] Statemachine mapping created");

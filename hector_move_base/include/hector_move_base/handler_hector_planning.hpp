@@ -151,6 +151,7 @@ public:
             //            }
             ROS_INFO("Planning with Hector Sbpl Stairs Planner failed");
             return hector_move_base::FAIL;
+        }
         plan = trajectory;
         // ------------------------------------------------------------------------------------
 
@@ -175,7 +176,7 @@ public:
         }
 
         return hector_move_base::NEXT;
-        }
+
     }
 
     void abort()

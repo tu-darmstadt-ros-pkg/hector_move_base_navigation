@@ -35,8 +35,8 @@ public:
     {
         ROS_DEBUG("[move_base] [flipper_action_state] flipper_action started.");
         hector_sbpl_stairs_planner::Path_with_Flipper extended_path= hectorMoveBaseInterface->getCurrentExtendedPath();
-        std::cout<<"current front: "<< current_front_ <<"    back: "<< current_rear_ <<std::endl;
-        std::cout<<"goal front: "<< extended_path.path.at(current_path_segment_).flipperFront <<"    back: "<< -extended_path.path.at(current_path_segment_).flipperRear <<std::endl;
+//        std::cout<<"current front: "<< current_front_ <<"    back: "<< current_rear_ <<std::endl;
+//        std::cout<<"goal front: "<< extended_path.path.at(current_path_segment_).flipperFront <<"    back: "<< -extended_path.path.at(current_path_segment_).flipperRear <<std::endl;
         if(fabs(current_front_- extended_path.path.at(current_path_segment_).flipperFront)>flipper_tolerance_ || fabs(current_rear_+extended_path.path.at(current_path_segment_).flipperRear)>flipper_tolerance_){
             if(!published_){
                 //publish flipper pos

@@ -91,7 +91,8 @@ void HectorMoveBase::setupStateMachine()
 //        mappingForPlanning.insert(std::make_pair(NEXT, refinePlanState_));
 //    else
 //        mappingForPlanning.insert(std::make_pair(NEXT, publishPathState_));
-    mappingForPlanning.insert(std::make_pair(NEXT, stairsDrivingState_));
+//    mappingForPlanning.insert(std::make_pair(NEXT, stairsDrivingState_));
+    mappingForPlanning.insert(std::make_pair(NEXT, idleState_));
     mappingForPlanning.insert(std::make_pair(ALTERNATIVE, exploringState_));
     mappingForPlanning.insert(std::make_pair(FAIL, stuckPlanningRecoveryState_));
     statemachine_->addHandlerMapping(planningState_, mappingForPlanning);

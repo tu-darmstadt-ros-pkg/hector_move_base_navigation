@@ -8,7 +8,7 @@
     
     <param name="SBPLLatticePlanner/primitive_filename" value="$(find hector_move_base)/mprim/crab_higher_cost_only_back.mprim" />
     
-    <param name="HectorSbplStairsPlanner/primitive_filename" value="$(find hector_sbpl_stairs_planner)/mprim/mprim_obelix_v11.mprim" />  
+    <param name="HectorSbplStairsPlanner/primitive_filename" value="$(find hector_sbpl_stairs_planner)/mprim/mprim_obelix_v11_with_backwards.mprim" />  
     
     <param name="use_alternate_planner" value="$(arg use_alternate_planner)" />
     <param name="hector_exploration_planner/explore_close_to_path" value="false" />

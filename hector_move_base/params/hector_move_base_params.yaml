@@ -48,7 +48,8 @@ HectorSbplStairsPlanner:
   same_stairs_distance_threshold: 1.5
   number_orientaions: 16
   lethal_obstacle: 100
-  obst_cost_thresh: 20
+  obst_cost_thresh: 40
   maxFlipperOffsetX: 0.5
   maxFlipperOffsetY: 0.5
   pitchTresh: 1.0
+  maxHeightInWorld: 1.5

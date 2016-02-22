@@ -39,7 +39,7 @@ public:
             hector_move_base_msgs::MoveBaseActionPath path;
             path.header.frame_id=extended_path.path.at(current_path_segment_).segment.header.frame_id;
             path.goal.target_path=extended_path.path.at(current_path_segment_).segment;
-            path.goal.speed=0.2;
+            path.goal.speed=0.1;
             path.goal_id.id="stairs_driving_path";
             path.goal.fixed=false;
             //publish path

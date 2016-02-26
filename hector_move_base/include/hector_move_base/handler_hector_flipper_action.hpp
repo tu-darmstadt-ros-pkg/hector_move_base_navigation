@@ -9,6 +9,7 @@
 #include <actionlib/client/terminal_state.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
 #include <control_msgs/JointTrajectoryControllerState.h>
+#include <sensor_msgs/JointState.h>
 
 namespace hector_move_base_handler {
 
@@ -27,7 +28,10 @@ public:
         ros::NodeHandle nh("");
         flipper_tolerance_=0.2;
         flipper_pub_= nh.advertise<trajectory_msgs::JointTrajectory>("/obelix_robot/flipper_traj_controller/command", 1 );
-        joint_sub_= nh.subscribe("/obelix_robot/flipper_traj_controller/state", 1, &HectorFlipperActionHandler::flipperCB, this);
+//        joint_sub_= nh.subscribe("/obelix_robot/flipper_traj_controller/state", 1, &HectorFlipperActionHandler::flipperCB, this);
+        joint_sub_= nh.subscribe("/joint_states", 1, &HectorFlipperActionHandler::flipperCB, this);
+
+
         current_path_segment_=0;
     }
 
@@ -35,8 +39,6 @@ public:
     {
         ROS_DEBUG("[move_base] [flipper_action_state] flipper_action started.");
         hector_sbpl_stairs_planner::Path_with_Flipper extended_path= hectorMoveBaseInterface->getCurrentExtendedPath();
-//        std::cout<<"current front: "<< current_front_ <<"    back: "<< current_rear_ <<std::endl;
-//        std::cout<<"goal front: "<< extended_path.path.at(current_path_segment_).flipperFront <<"    back: "<< -extended_path.path.at(current_path_segment_).flipperRear <<std::endl;
         if(fabs(current_front_- extended_path.path.at(current_path_segment_).flipperFront)>flipper_tolerance_ || fabs(current_rear_+extended_path.path.at(current_path_segment_).flipperRear)>flipper_tolerance_){
             if(!published_){
                 //publish flipper pos
@@ -74,9 +76,17 @@ public:
         ROS_WARN("[move_base] [flipper_action_state] Abort was called in planning, this seams to lead to unresponsive behavior");
     }
 
-    void flipperCB(const control_msgs::JointTrajectoryControllerState &state){
-        current_front_=state.actual.positions.at(0);
-        current_rear_=state.actual.positions.at(1);
+    void flipperCB(const sensor_msgs::JointState &state){
+        for(int i=0; i<state.name.size(); i++){
+            if(state.name.at(i).compare(std::string("front_flipper_joint"))==0){
+                current_front_=state.position.at(i);
+                continue;
+            }
+            if(state.name.at(i).compare(std::string("rear_flipper_joint"))==0){
+                current_rear_=state.position.at(i);
+                continue;
+            }
+        }
     }
 
 };

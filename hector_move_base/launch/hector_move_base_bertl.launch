@@ -12,7 +12,7 @@
     <param name="hector_exploration_planner/explore_close_to_path" value="false" />
     
     <rosparam file="$(find hector_move_base)/params/hector_move_base_params.yaml" command="load" />
-    <rosparam file="$(find hector_move_base)/params/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(find hector_move_base)/params/global_costmap_params_bertl.yaml" command="load" />
     <rosparam file="$(find hector_move_base)/params/hector_global_planner_params.yaml" command="load" />
     
   </node>

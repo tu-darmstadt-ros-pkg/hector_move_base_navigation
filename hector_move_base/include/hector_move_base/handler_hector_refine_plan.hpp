@@ -67,8 +67,7 @@ public:
         ROS_DEBUG("[refine_plan_handler]: constructed successfully");
     }
 
-    hector_move_base::RESULT handle()
-    {
+    hector_move_base::RESULT handle() {
         ROS_DEBUG("[refine_plan_handler]: starting refine plan");
         current_path = hectorMoveBaseInterface->getCurrentActionPath();
         if (current_path.goal.target_path.poses.empty()) {
@@ -95,8 +94,8 @@ public:
                 new_path.goal_id.id = goal_id_stream.str();
                 new_path.header.frame_id = current_path.header.frame_id;
                 new_path.header.stamp = current_path.goal.target_path.header.stamp;
-                new_path.goal.fixed = true;
                 new_path.goal.speed = current_path.goal.speed;
+                new_path.goal.fixed = true;
                 new_path.goal.target_path.header.frame_id = current_path.goal.target_path.header.frame_id;
                 new_path.goal.target_path.header.stamp = ros::Time::now();
                 new_path.goal.target_path.poses = trajectory;

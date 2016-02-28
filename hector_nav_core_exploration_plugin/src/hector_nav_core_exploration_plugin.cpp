@@ -40,14 +40,14 @@ HectorNavCoreExplorationPlugin::~HectorNavCoreExplorationPlugin()
 }
 
 bool HectorNavCoreExplorationPlugin::makePlan(const geometry_msgs::PoseStamped& start,
-                      const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan, const float distance)
+                      const geometry_msgs::PoseStamped& goal, std::vector<geometry_msgs::PoseStamped>& plan, const float& distance)
 {
   if (!exploration_planner) return false;
 
-    if (distance <= 0.0f) {
+    if (distance <= 0) {
       return exploration_planner->makePlan(start, goal, plan);
     } else {
-        ROS_INFO("[exploration_plugin]: starting getObservationPose. distance = %f; (%f,%f,%f) (%f,%f,%f,%f)", distance, goal.pose.position.x, goal.pose.position.y, goal.pose.position.z, goal.pose.orientation.x, goal.pose.orientation.y, goal.pose.orientation.z, goal.pose.orientation.w);
+        ROS_DEBUG("[exploration_plugin]: starting getObservationPose. distance = %f; (%f,%f,%f) (%f,%f,%f,%f)", distance, goal.pose.position.x, goal.pose.position.y, goal.pose.position.z, goal.pose.orientation.x, goal.pose.orientation.y, goal.pose.orientation.z, goal.pose.orientation.w);
 
         geometry_msgs::PoseStamped observation_goal;
 

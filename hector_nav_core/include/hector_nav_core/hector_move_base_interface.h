@@ -63,9 +63,6 @@ public:
     //send a goal point to the controller
     virtual void sendActionGoal(const handlerActionGoal&) = 0;
 
-    //set Action Server state to canceled
-    virtual void setActionServerCanceled() = 0;
-
     /*
       / PATHS
       */
@@ -73,7 +70,7 @@ public:
     virtual void setActionPath (hector_move_base_msgs::MoveBaseActionPath) = 0;
 
     //send a path to the controller
-    virtual void sendActionPath(const hector_move_base_msgs::MoveBaseActionPath&) = 0;
+    virtual void sendActionPath(hector_move_base_msgs::MoveBaseActionPath&) = 0;
 
     /*
       / MOVE_BASE SEQUENCE MANIPULATION

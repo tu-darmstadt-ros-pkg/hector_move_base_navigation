@@ -9,8 +9,7 @@
 
 #include <map>
 
-namespace hector_move_base_handler
-{
+namespace hector_move_base_handler {
 
 /**
  * @abstract HectorMoveBaseHandler
@@ -21,8 +20,7 @@ class HectorMoveBaseHandler
 protected:
     hector_move_base::IHectorMoveBase* hectorMoveBaseInterface;
 
-    HectorMoveBaseHandler(hector_move_base::IHectorMoveBase* interface)
-    {
+    HectorMoveBaseHandler(hector_move_base::IHectorMoveBase* interface) {
         hectorMoveBaseInterface = interface;
     }
 

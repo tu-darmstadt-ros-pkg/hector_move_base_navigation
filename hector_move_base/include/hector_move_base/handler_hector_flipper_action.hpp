@@ -4,7 +4,7 @@
 #include <hector_nav_core/hector_move_base_handler.h>
 #include <hector_nav_core/exploration_planner.h>
 #include <pluginlib/class_loader.h>
-#include <hector_sbpl_stairs_planner/Path_with_Flipper.h>
+#include <hector_stairs_planner_msgs/Path_with_Flipper.h>
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/client/terminal_state.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
@@ -39,7 +39,7 @@ public:
     hector_move_base::RESULT handle()
     {
         ROS_DEBUG("[move_base] [flipper_action_state] flipper_action started.");
-        hector_sbpl_stairs_planner::Path_with_Flipper extended_path= hectorMoveBaseInterface->getCurrentExtendedPath();
+        hector_stairs_planner_msgs::Path_with_Flipper extended_path= hectorMoveBaseInterface->getCurrentExtendedPath();
         if(fabs(current_front_- extended_path.path.at(current_path_segment_).flipperFront)>flipper_tolerance_ || fabs(current_rear_-extended_path.path.at(current_path_segment_).flipperRear)>flipper_tolerance_){
             if(!published_){
                 //publish flipper pos

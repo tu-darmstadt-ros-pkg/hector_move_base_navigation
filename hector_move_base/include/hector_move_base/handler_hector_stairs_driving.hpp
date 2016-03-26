@@ -4,8 +4,8 @@
 #include <hector_nav_core/hector_move_base_handler.h>
 #include <hector_nav_core/exploration_planner.h>
 #include <pluginlib/class_loader.h>
-#include <hector_sbpl_stairs_planner/Path_segment.h>
-#include <hector_sbpl_stairs_planner/Path_with_Flipper.h>
+#include <hector_stairs_planner_msgs/Path_segment.h>
+#include <hector_stairs_planner_msgs/Path_with_Flipper.h>
 
 namespace hector_move_base_handler {
 
@@ -33,7 +33,7 @@ public:
     hector_move_base::RESULT handle()
     {
         ROS_DEBUG("[move_base] [stairs_driving_handler] stairs_driving started.");
-        hector_sbpl_stairs_planner::Path_with_Flipper extended_path= hectorMoveBaseInterface->getCurrentExtendedPath();
+        hector_stairs_planner_msgs::Path_with_Flipper extended_path= hectorMoveBaseInterface->getCurrentExtendedPath();
         drivepath_pub_debug.publish(extended_path.path.at(current_path_segment_));
         if(!goal_reached_){
             hector_move_base_msgs::MoveBaseActionPath path;

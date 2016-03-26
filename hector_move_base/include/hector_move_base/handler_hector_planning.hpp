@@ -4,7 +4,7 @@
 #include <hector_nav_core/hector_move_base_handler.h>
 #include <hector_nav_core/exploration_planner.h>
 #include <pluginlib/class_loader.h>
-#include <hector_sbpl_stairs_planner/Path_with_Flipper.h>
+#include <hector_stairs_planner_msgs/Path_with_Flipper.h>
 
 namespace hector_move_base_handler {
 

@@ -240,7 +240,7 @@ hector_move_base_msgs::MoveBaseActionPath HectorMoveBase::getCurrentActionPath()
   return path_;
 }
 
-hector_sbpl_stairs_planner::Path_with_Flipper HectorMoveBase::getCurrentExtendedPath(){
+hector_stairs_planner_msgs::Path_with_Flipper HectorMoveBase::getCurrentExtendedPath(){
     return extended_path_;
 }
 
@@ -318,7 +318,7 @@ void HectorMoveBase::exploreCB(const hector_move_base_msgs::MoveBaseActionExplor
   return;
 }
 
-void HectorMoveBase::stairsDrivingCB(const hector_sbpl_stairs_planner::Path_with_Flipper &path){
+void HectorMoveBase::stairsDrivingCB(const hector_stairs_planner_msgs::Path_with_Flipper &path){
     ROS_INFO("[hector_move_base]: In stairsDriving callback");
     extended_path_=path;
     setNextState(stairsDrivingState_);

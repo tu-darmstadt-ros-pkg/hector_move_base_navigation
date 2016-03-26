@@ -25,8 +25,8 @@
 #include <hector_nav_core/hector_move_base_handler.h>
 #include <hector_nav_core/hector_move_base_interface.h>
 
-#include <hector_sbpl_stairs_planner/Path_with_Flipper.h>
-#include <hector_sbpl_stairs_planner/Path_segment.h>
+#include <hector_stairs_planner_msgs/Path_with_Flipper.h>
+#include <hector_stairs_planner_msgs/Path_segment.h>
 
 #include <monstertruck_msgs/SetAlternativeTolerance.h>
 
@@ -62,7 +62,7 @@ private:
     bool use_alternate_planner_;
     std::vector<handlerActionGoal> goals_;
     hector_move_base_msgs::MoveBaseActionPath path_;
-    hector_sbpl_stairs_planner::Path_with_Flipper extended_path_;
+    hector_stairs_planner_msgs::Path_with_Flipper extended_path_;
     ros::Publisher current_goal_pub_, drivepath_pub_, feedback_pub_, result_pub_, goalmarker_pub_, state_name_pub_, autonomy_level_pub_;
     ros::Subscriber cancel_sub_, controller_result_sub_, explore_sub_, goal_sub_, observation_sub_, syscommand_sub_, simple_goal_sub_, extended_path_sub_;
     ros::ServiceClient tolerance_client_;
@@ -94,7 +94,7 @@ protected:
   void sendActionGoal(const handlerActionGoal&);
 
   hector_move_base_msgs::MoveBaseActionPath getCurrentActionPath();
-  hector_sbpl_stairs_planner::Path_with_Flipper getCurrentExtendedPath();
+  hector_stairs_planner_msgs::Path_with_Flipper getCurrentExtendedPath();
   void setActionPath (hector_move_base_msgs::MoveBaseActionPath);
   void sendActionPath(hector_move_base_msgs::MoveBaseActionPath&);
 
@@ -121,7 +121,7 @@ protected:
   void cancelCB(const std_msgs::Empty::ConstPtr& empty);
   void syscommandCB(const std_msgs::String::ConstPtr& string);
   void controllerResultCB(const hector_move_base_msgs::MoveBaseActionResult::ConstPtr& result);
-  void stairsDrivingCB(const hector_sbpl_stairs_planner::Path_with_Flipper &path);
+  void stairsDrivingCB(const hector_stairs_planner_msgs::Path_with_Flipper &path);
 
   void abortedGoal();
   void preemptedGoal();

@@ -9,7 +9,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_core/base_global_planner.h>
 #include <nav_msgs/Path.h>
-#include <hector_sbpl_stairs_planner/Path_with_Flipper.h>
+#include <hector_stairs_planner_msgs/Path_with_Flipper.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -68,7 +68,7 @@ public:
       / PATHS
       */
     virtual hector_move_base_msgs::MoveBaseActionPath getCurrentActionPath() = 0;
-    virtual hector_sbpl_stairs_planner::Path_with_Flipper getCurrentExtendedPath() = 0;
+    virtual hector_stairs_planner_msgs::Path_with_Flipper getCurrentExtendedPath() = 0;
     virtual void setActionPath (hector_move_base_msgs::MoveBaseActionPath) = 0;
 
     //send a path to the controller

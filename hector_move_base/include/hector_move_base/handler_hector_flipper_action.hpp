@@ -27,8 +27,8 @@ public:
     HectorFlipperActionHandler(hector_move_base::IHectorMoveBase* interface) : HectorMoveBaseHandler(interface){
         ros::NodeHandle nh("");
         flipper_tolerance_=0.2;
-        flipper_pub_= nh.advertise<trajectory_msgs::JointTrajectory>("/obelix_robot/flipper_traj_controller/command", 1 );
-//        flipper_pub_= nh.advertise<trajectory_msgs::JointTrajectory>("/thor_mang/flipper_traj_controller/command", 1 );
+//        flipper_pub_= nh.advertise<trajectory_msgs::JointTrajectory>("/obelix_robot/flipper_traj_controller/command", 1 );
+        flipper_pub_= nh.advertise<trajectory_msgs::JointTrajectory>("/thor_mang/flipper_traj_controller/command", 1 );
 //        joint_sub_= nh.subscribe("/obelix_robot/flipper_traj_controller/state", 1, &HectorFlipperActionHandler::flipperCB, this);
         joint_sub_= nh.subscribe("/joint_states", 1, &HectorFlipperActionHandler::flipperCB, this);
 

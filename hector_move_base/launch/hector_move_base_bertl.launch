@@ -3,9 +3,12 @@
 <launch>
   
   <arg name="use_alternate_planner" default="true" />
+  <arg name="map_topic" default="map" />
 
   <node pkg="hector_move_base" type="hector_move_base" name="move_base" output="screen" respawn="true">
     
+    <remap from="map" to="$(arg map_topic)"/>
+ 
     <param name="SBPLLatticePlanner/primitive_filename" value="$(find hector_move_base)/mprim/crab_higher_cost_only_back.mprim" />
     
     <param name="use_alternate_planner" value="$(arg use_alternate_planner)" />

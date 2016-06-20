@@ -341,16 +341,23 @@ void HectorMoveBase::exploreCB(const hector_move_base_msgs::MoveBaseActionExplor
     newGoal.goal_id.id = goal_id_counter_++;
     newGoal.goal_id.stamp = ros::Time::now();
     newGoal.speed = goal->speed;
-    newGoal.do_exploration = false;
+    if (goal->exploration == true){
+	 newGoal.do_exploration = true;}
+	
+    else
+    	{newGoal.do_exploration = false;}
+   
 
     //make sure goal could be transformed to costmap frame
-    newGoal.target_pose = goalToGlobalFrame(goal->target_pose);
-    if (newGoal.target_pose.header.frame_id != costmap_->getGlobalFrameID()) {
-        ROS_ERROR("[hector_move_base]: tf transformation into global frame failed. goal will be canceled");
-        //new Goal has to be set in order to publish goal aborted result
-        pushCurrentGoal(newGoal);
-        abortedGoal();
-        return;
+    if (goal->exploration == false) {
+    	newGoal.target_pose = goalToGlobalFrame(goal->target_pose);
+    	if (newGoal.target_pose.header.frame_id != costmap_->getGlobalFrameID()) {
+        	ROS_ERROR("[hector_move_base]: tf transformation into global frame failed. goal will be canceled");
+        	//new Goal has to be set in order to publish goal aborted result
+        	pushCurrentGoal(newGoal);
+        	abortedGoal();
+        	return;
+    	}
     }
     pushCurrentGoal(newGoal);
     setNextState(planningState_);

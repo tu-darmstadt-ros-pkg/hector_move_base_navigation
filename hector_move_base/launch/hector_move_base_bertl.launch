@@ -13,6 +13,7 @@
     
     <param name="use_alternate_planner" value="$(arg use_alternate_planner)" />
     <param name="hector_exploration_planner/explore_close_to_path" value="false" />
+    <param name="hector_exploration_planner/observation_pose_desired_dist" value="0.8" />
     
     <rosparam file="$(find hector_move_base)/params/hector_move_base_params.yaml" command="load" />
     <rosparam file="$(find hector_move_base)/params/global_costmap_params_bertl.yaml" command="load" />

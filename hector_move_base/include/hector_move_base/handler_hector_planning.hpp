@@ -181,9 +181,9 @@ public:
         ROS_DEBUG("[move_base] [planning_handler] Generated plan, continue with NEXT.");
 
         if (isGoalIDEqual(current_goal.goal_id, hectorMoveBaseInterface->getCurrentGoal().goal_id)) {
-            hectorMoveBaseInterface->popCurrentGoal();
-            current_goal.target_pose.pose = plan.back().pose;
-            hectorMoveBaseInterface->pushCurrentGoal(current_goal);
+            //hectorMoveBaseInterface->popCurrentGoal();
+            //current_goal.target_pose.pose = plan.back().pose;
+            //hectorMoveBaseInterface->pushCurrentGoal(current_goal);
         }
 
         return hector_move_base::NEXT;

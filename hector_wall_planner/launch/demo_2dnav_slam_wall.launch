@@ -1,6 +1,0 @@
-<?xml version="1.0"?>
-
-<launch>
-    <include file="$(find hector_wall_planner)/launch/hector_erratic_laser_wg_world.launch" />
-    <include file="$(find hector_wall_planner)/launch/erratic_2dnav_slam_wall.launch" />
-</launch>

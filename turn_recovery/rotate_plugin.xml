@@ -1,7 +1,0 @@
-<library path="lib/libturn_recovery">
-  <class name="turn_recovery/TurnRecovery" type="turn_recovery::TurnRecovery" base_class_type="nav_core::RecoveryBehavior">
-    <description>
-      A recovery behavior that performs a 180 degree turn around to attempt to clear out space.
-    </description>
-  </class>
-</library>

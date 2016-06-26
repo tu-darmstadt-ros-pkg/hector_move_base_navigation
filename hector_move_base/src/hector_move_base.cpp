@@ -342,7 +342,8 @@ void HectorMoveBase::exploreCB(const hector_move_base_msgs::MoveBaseActionExplor
     newGoal.goal_id.stamp = ros::Time::now();
     newGoal.speed = goal->speed;
     if (goal->exploration == true){
-	 newGoal.do_exploration = true;}
+	 newGoal.do_exploration = true;
+	 }
 	
     else
     	{newGoal.do_exploration = false;}

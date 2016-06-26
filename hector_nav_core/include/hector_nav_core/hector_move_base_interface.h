@@ -32,7 +32,7 @@ struct handlerActionGoal {
         goal_id(),
         target_pose(),
         speed(100),
-        distance(0.5),
+        distance(0.0),
         do_exploration(false) {}
 
     actionlib_msgs::GoalID goal_id;

@@ -176,6 +176,10 @@ public:
         new_path.goal.target_path.header.frame_id = new_path.header.frame_id ;
         new_path.goal.target_path.header.stamp = ros::Time::now() ;
         new_path.goal.target_path.poses = plan;
+
+	// Gabriel Hüttenberger: Test for easier robot orientation in front of Victims
+	// new_path.goal.target_path.poses[(unsigned int)(plan.size()-1)].orientation = new_path.goal.target_path.poses[(unsigned int)(plan.size()-2)].orientation;
+
         hectorMoveBaseInterface->setActionPath(new_path);
 
         ROS_DEBUG("[move_base] [planning_handler] Generated plan, continue with NEXT.");

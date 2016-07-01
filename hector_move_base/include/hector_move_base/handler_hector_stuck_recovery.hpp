@@ -97,6 +97,7 @@ public:
         target_goal.target_pose.header.stamp = trajectory_info.response.trajectory_radius_entry_pose_to_req_pose.header.stamp;
         inv_traj_back_pose_pub_.publish(target_goal.target_pose);
         hector_move_base_msgs::setAction(target_path_goal_, target_goal);
+        target_path_goal_.reverse_allowed = true;
 
         path_pub_.publish(target_path_goal_);
 

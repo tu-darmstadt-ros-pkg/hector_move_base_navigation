@@ -518,15 +518,18 @@ void HectorMoveBase::controllerResultCB(const hector_move_base_msgs::MoveBaseAct
 
     case actionlib_msgs::GoalStatus::ABORTED:
         ROS_INFO("[hector_move_base]: received result from controller == ABORTED");
-        if (currentState_ == exploringState_) {
+        if (currentState_ == exploringState_ || currentState_ == waitForReexploringState_) {
             setNextState(stuckExplorationRecoveryState_);
             return;
         }
-        if ((currentState_ == planningState_) || currentState_ == refinePlanState_) {
+        if (currentState_ == planningState_ || currentState_ == refinePlanState_
+                || currentState_ == waitForReplanningState_) {
             setNextState(stuckPlanningRecoveryState_);
             return;
         }
-        ROS_WARN("[hector_move_base]: controller sent ABORTED. currentState is neither planning nor exploring.");
+        ROS_ERROR_STREAM("[hector_move_base] current state is " << typeid(*currentState_.get()).name());
+        ROS_WARN("[hector_move_base]: controller sent ABORTED. currentState is neither planning nor exploring"
+                 " nor waiting for results of these actions.");
         return;
 
     case actionlib_msgs::GoalStatus::SUCCEEDED:

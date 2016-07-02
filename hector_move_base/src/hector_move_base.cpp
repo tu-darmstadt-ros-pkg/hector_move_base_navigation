@@ -35,10 +35,7 @@ HectorMoveBase::HectorMoveBase(std::string name, tf::TransformListener& tf) :
     goalmarker_pub_ = private_nh_.advertise<visualization_msgs::Marker>("goal_marker", 0);
 
     explore_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionExplore>("explore", 1, boost::bind(&HectorMoveBase::exploreCB, this, _1));
-//    goal_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionGoal>("goal", 1, boost::bind(&HectorMoveBase::goalCB, this, _1));
-//    observation_sub_ = private_nh_.subscribe<hector_move_base_msgs::MoveBaseActionGoal>("observe", 1, boost::bind(&HectorMoveBase::observationCB, this, _1));
     simple_goal_sub_ = private_nh_.subscribe<geometry_msgs::PoseStamped>("simple_goal", 1, boost::bind(&HectorMoveBase::simple_goalCB, this, _1));
-//    cancel_sub_ = private_nh_.subscribe<std_msgs::Empty>("cancel", 1, boost::bind(&HectorMoveBase::cancelCB, this, _1));
     syscommand_sub_ = nh_.subscribe<std_msgs::String>("syscommand", 1, boost::bind(&HectorMoveBase::syscommandCB, this, _1));
 
     controller_result_sub_ = controller_nh.subscribe<hector_move_base_msgs::MoveBaseActionResult>("result", 1, boost::bind(&HectorMoveBase::controllerResultCB, this, _1));
@@ -214,6 +211,7 @@ void HectorMoveBase::sendActionGoal(const handlerActionGoal& goal)
     path.goal_id = goal.goal_id;
     path.goal.speed = goal.speed;
     path.goal.target_path.header = goal.target_pose.header;
+    path.reverse_allowed = goal.reverse_allowed;
 
     geometry_msgs::PoseStamped targetPose;
     targetPose.header = goal.target_pose.header;
@@ -307,30 +305,6 @@ void HectorMoveBase::exploreCB(const hector_move_base_msgs::MoveBaseActionExplor
     return;
 }
 
-//void HectorMoveBase::goalCB(const hector_move_base_msgs::MoveBaseActionGoalConstPtr &goal) {
-//  ROS_INFO("GOAL CALLBACK!");
-//  ROS_DEBUG("[hector_move_base]: In goal callback");
-//  abortedGoal();
-
-//  handlerActionGoal newGoal = handlerActionGoal();
-//  newGoal.goal_id = goal->goal_id;
-//  newGoal.speed = goal->goal.speed;
-//  newGoal.do_exploration = false;
-
-//  //make sure goal could be transformed to costmap frame
-//  newGoal.target_pose = goalToGlobalFrame(goal->goal.target_pose);
-//  if (newGoal.target_pose.header.frame_id != costmap_->getGlobalFrameID()) {
-//      ROS_ERROR("[hector_move_base]: tf transformation into global frame failed. goal will be canceled");
-//      //new Goal has to be set in order to publish goal aborted result
-//      pushCurrentGoal(newGoal);
-//      abortedGoal();
-//      return;
-//  }
-//  pushCurrentGoal(newGoal);
-//  setNextState(planningState_);
-//  return;
-//}
-
   void HectorMoveBase::asGoalCB() {
     ROS_INFO("[hector_move_base]: In ActionServer goal callback");
     const hector_move_base_msgs::MoveBaseGoalConstPtr goal = action_server_.acceptNewGoal();
@@ -341,6 +315,7 @@ void HectorMoveBase::exploreCB(const hector_move_base_msgs::MoveBaseActionExplor
     newGoal.goal_id.id = goal_id_counter_++;
     newGoal.goal_id.stamp = ros::Time::now();
     newGoal.speed = goal->speed;
+    newGoal.reverse_allowed = goal->reverse_allowed;
     if (goal->exploration == true) {
         newGoal.do_exploration = true;
     }
@@ -443,12 +418,6 @@ void HectorMoveBase::asCancelCB() {
   abortedGoal();
   setNextState(idleState_);
 }
-
-//void HectorMoveBase::cancelCB(const std_msgs::EmptyConstPtr &empty) {
-//    ROS_DEBUG("[hector_move_base]: In cancel callback");
-//    abortedGoal();
-//    setNextState(idleState_);
-//}
 
 void HectorMoveBase::syscommandCB(const std_msgs::StringConstPtr &string) {
     ROS_DEBUG("[hector_move_base]: In syscommandCB callback: %s", string->data.c_str());

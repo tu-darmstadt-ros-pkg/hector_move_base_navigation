@@ -113,6 +113,7 @@ public:
             new_goal.target_pose.header.frame_id = current_goal.target_pose.header.frame_id;
             new_goal.target_pose.header.stamp = new_goal.goal_id.stamp;
             new_goal.target_pose.pose = plan.back().pose;
+            new_goal.reverse_allowed = current_goal.reverse_allowed;
             hectorMoveBaseInterface->pushCurrentGoal(new_goal);
 
             hector_move_base_msgs::MoveBaseActionPath new_path = hector_move_base_msgs::MoveBaseActionPath();
@@ -124,6 +125,7 @@ public:
             new_path.goal.target_path.header.frame_id = new_path.header.frame_id;
             new_path.goal.target_path.header.stamp = ros::Time::now();
             new_path.goal.target_path.poses = plan;
+            new_path.reverse_allowed = current_goal.reverse_allowed;
             hectorMoveBaseInterface->setActionPath(new_path);
 
             ROS_DEBUG("[move_base] [exploration_handler] ALTERNATIVE, plan generated skipping planning state");

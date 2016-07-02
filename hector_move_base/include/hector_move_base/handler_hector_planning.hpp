@@ -176,6 +176,7 @@ public:
         new_path.goal.target_path.header.frame_id = new_path.header.frame_id ;
         new_path.goal.target_path.header.stamp = ros::Time::now() ;
         new_path.goal.target_path.poses = plan;
+        new_path.reverse_allowed = current_goal.reverse_allowed;
 
 	// Gabriel Hüttenberger: Test for easier robot orientation in front of Victims
 	// new_path.goal.target_path.poses[(unsigned int)(plan.size()-1)].orientation = new_path.goal.target_path.poses[(unsigned int)(plan.size()-2)].orientation;

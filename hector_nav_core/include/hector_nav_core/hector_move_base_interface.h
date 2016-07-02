@@ -33,12 +33,15 @@ struct handlerActionGoal {
         target_pose(),
         speed(100),
         distance(0.0),
-        do_exploration(false) {}
+        do_exploration(false),
+        reverse_allowed(false) {}
 
     actionlib_msgs::GoalID goal_id;
     geometry_msgs::PoseStamped target_pose;
     float speed, distance;
-    bool do_exploration;};
+    bool do_exploration;
+    bool reverse_allowed;
+};
 
 /**
    * @interface IHectorMoveBase

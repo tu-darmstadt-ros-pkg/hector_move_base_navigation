@@ -579,7 +579,6 @@ void HectorMoveBase::abortedGoal() {
     hector_move_base_msgs::MoveBaseResult result;
     result.result = hector_move_base_msgs::MoveBaseResult::FAIL;
     action_server_.setAborted(result, "ABORTED");
-//    publishAbortState_->handle();
     clearGoal();
 }
 
@@ -588,9 +587,6 @@ void HectorMoveBase::preemptedGoal() {
     hector_move_base_msgs::MoveBaseResult result;
     result.result = hector_move_base_msgs::MoveBaseResult::FAIL;
     action_server_.setPreempted(result, "PREEMPTED");
-//    publishPreemptedState_->handle();
-    // do not send an empty path when preempted. Preempted is triggered when controller received an ActionGoal/Path
-//    clearGoal();
     goals_.clear();
     setNextState(idleState_);
 }
@@ -611,7 +607,6 @@ void HectorMoveBase::successGoal() {
     hector_move_base_msgs::MoveBaseResult result;
     result.result = hector_move_base_msgs::MoveBaseResult::SUCCESS;
     action_server_.setSucceeded(result, "SUCCESS");
-//    publishSuccessState_->handle();
     clearGoal();
 }
 

@@ -100,6 +100,7 @@ public:
                 new_path.goal.target_path.header.frame_id = current_path.goal.target_path.header.frame_id;
                 new_path.goal.target_path.header.stamp = ros::Time::now();
                 new_path.goal.target_path.poses = trajectory;
+                new_path.reverse_allowed = current_path.reverse_allowed;
                 hectorMoveBaseInterface->setActionPath(new_path);
                 ROS_DEBUG("[refine_plan_handler]: NEXT generated path, because of plan orientation ");
                 return hector_move_base::NEXT;

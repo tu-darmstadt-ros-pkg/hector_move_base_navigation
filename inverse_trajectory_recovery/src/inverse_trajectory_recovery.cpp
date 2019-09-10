@@ -34,13 +34,13 @@
 #include <actionlib_msgs/GoalID.h>
 
 //register this planner as a RecoveryBehavior plugin
-PLUGINLIB_DECLARE_CLASS(inverse_trajectory_recovery, InverseTrajectoryRecovery, inverse_trajectory_recovery::InverseTrajectoryRecovery, nav_core::RecoveryBehavior)
+PLUGINLIB_EXPORT_CLASS(inverse_trajectory_recovery::InverseTrajectoryRecovery, nav_core::RecoveryBehavior)
 
 namespace inverse_trajectory_recovery {
 InverseTrajectoryRecovery::InverseTrajectoryRecovery(): global_costmap_(NULL), local_costmap_(NULL),
   tf_(NULL), initialized_(false), world_model_(NULL) {}
 
-void InverseTrajectoryRecovery::initialize(std::string name, tf::TransformListener* tf,
+void InverseTrajectoryRecovery::initialize(std::string name, tf2_ros::Buffer* tf,
     costmap_2d::Costmap2DROS* global_costmap, costmap_2d::Costmap2DROS* local_costmap){
   if(!initialized_){
     name_ = name;

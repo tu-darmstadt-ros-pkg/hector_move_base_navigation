@@ -63,7 +63,7 @@ namespace inverse_trajectory_recovery{
        * @param global_costmap A pointer to the global_costmap used by the navigation stack
        * @param local_costmap A pointer to the local_costmap used by the navigation stack
        */
-      void initialize(std::string name, tf::TransformListener* tf,
+      void initialize(std::string name, tf2_ros::Buffer* tf,
           costmap_2d::Costmap2DROS* global_costmap, costmap_2d::Costmap2DROS* local_costmap);
 
       /**
@@ -84,7 +84,7 @@ namespace inverse_trajectory_recovery{
       costmap_2d::Costmap2DROS* global_costmap_, *local_costmap_;
       std::string name_;
 
-      tf::TransformListener* tf_;
+      tf2_ros::Buffer* tf_;
       ros::ServiceClient inverse_trajectory_service_client_;
 
       ros::Publisher path_pub_;
